@@ -2,7 +2,7 @@ import { createMemoryHistory, createRouter, RouteRecordRaw } from "vue-router";
 import WelcomePage from "../views/WelcomePage.vue";
 import MainPage from "../views/MainPage.vue";
 import SongListPage from "../views/SongListPage.vue";
-// import SongPageContainer from "../views/SongPageContainer.vue";
+import SongPageContainer from "../views/SongPageContainer.vue";
 
 const routes: Array<RouteRecordRaw> = [
   {
@@ -23,11 +23,11 @@ const routes: Array<RouteRecordRaw> = [
         name: "SongList",
         component: SongListPage,
       },
-  //     {
-  //       path: "/song/:songId",
-  //       name: "Song",
-  //       component: SongPageContainer,
-  //     },
+      {
+        path: "/song/:songId",
+        name: "Song",
+        component: SongPageContainer,
+      },
     ],
   },
 ];

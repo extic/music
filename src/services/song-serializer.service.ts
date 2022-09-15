@@ -34,3 +34,18 @@ export function saveSongJson(song: Song) {
   delete content.folder;
   fs.writeFileSync(filename, JSON.stringify(content, null, 2))
 }
+
+export function getSongPages(song: Song): string[] {
+  return fs.readdirSync(song.folder)
+    .filter((it) => it.endsWith('.png'))
+    .map((it) => `${song.folder}/${it}`)
+    .sort();
+}
+
+export function parseSong(song: Song): any {
+  // fs.readdirSync(song.folder)
+  // .find((it) => it.endsWith('.musicxml'))
+  // .find
+  return {}
+}
+

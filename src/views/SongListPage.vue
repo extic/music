@@ -1,7 +1,6 @@
 <template>
   <div class="song-list-page">
-    songlist page
-    <!-- <div class="filter-container">
+    <div class="filter-container">
       <button class="filter-button" :class="{ selected: showAllSongs }" @click="showAllSongs = true">
         <img src="../assets/images/all.svg" />
         <span>All Songs</span>
@@ -21,68 +20,76 @@
         <song-box :song="song" v-for="song in filteredSongList" :key="song.name" @click="selectSong(song)" />
       </transition-group>
       <div v-if="filteredSongList.length === 0" class="no-match">No song matches your filter</div>
-    </section> -->
+    </section>
   </div>
 </template>
 
 <script lang="ts">
 import { computed, defineComponent, onMounted, ref } from "vue";
-// import { Song, useSongStore } from "../store/song-store";
-// import SongBox from "../components/SongBox.vue";
+import { useSongStore } from "../store/song-store";
+import SongBox from "../components/SongBox.vue";
 import { useRouter } from "vue-router";
+import { filter } from "minimatch";
+import { loadSongs, Song } from "../services/song-serializer.service";
 
 export default defineComponent({
   name: "SongListPage",
 
-  // components: { SongBox },
+  components: { SongBox },
 
-  // setup() {
-  //   const router = useRouter();
-  //   const store = useSongStore();
+  setup() {
+    const router = useRouter();
+    const store = useSongStore();
 
-  //   const filter = computed({
-  //     get(): string {
-  //       return store.filter;
-  //     },
-  //     set(newValue: string): void {
-  //       store.setFilter(newValue);
-  //     },
-  //   });
+    const songList = loadSongs('C:/Users/User/music-data-files');
+    store.setSongList(songList);
 
-  //   const showAllSongs = computed({
-  //     get(): boolean {
-  //       return !store.showFavorites;
-  //     },
-  //     set(newValue: boolean): void {
-  //       store.setShowFavorites(!newValue);
-  //     },
-  //   });
+    console.log(store.songList)
+    
 
-  //   const songs = ref([] as Song[]);
+    const filter = computed({
+      get(): string {
+        return store.filter;
+      },
+      set(newValue: string): void {
+        store.setFilter(newValue);
+      },
+    });
 
-  //   const filteredSongList = computed(() => {
-  //     let filteredSongs = songs.value;
-  //     if (!showAllSongs.value) {
-  //       filteredSongs = filteredSongs.filter((it) => it.favorite);
-  //     }
+    const showAllSongs = computed({
+      get(): boolean {
+        return !store.showFavorites;
+      },
+      set(newValue: boolean): void {
+        store.setShowFavorites(!newValue);
+      },
+    });
 
-  //     return filteredSongs
-  //       .filter((it) => filter.value === "" || it.name.toLowerCase().includes(filter.value) || it.author.toLowerCase().includes(filter.value))
-  //       .sort((s1: Song, s2: Song) => s1.name.localeCompare(s2.name));
-  //   });
+    const songs = ref([] as Song[]);
 
-  //   const selectSong = (song: Song) => {
-  //     router.push({ name: "Song", params: { songId: song.id } });
-  //   };
+    const filteredSongList = computed(() => {
+      let filteredSongs = songs.value;
+      if (!showAllSongs.value) {
+        filteredSongs = filteredSongs.filter((it) => it.favorite);
+      }
 
-  //   onMounted(() => {
-  //     songs.value = store.songList;
-  //     // store.commit("setKeyboardButtonShown", false);
-  //     // store.dispatch("fetchSongList");
-  //   });
+      return filteredSongs
+        .filter((it) => filter.value === "" || it.name.toLowerCase().includes(filter.value) || it.author.toLowerCase().includes(filter.value))
+        .sort((s1: Song, s2: Song) => s1.name.localeCompare(s2.name));
+    });
 
-  //   return { showAllSongs, filter, selectSong, filteredSongList, songs };
-  // },
+    const selectSong = (song: Song) => {
+      router.push({ name: "Song", params: { songId: song.id } });
+    };
+
+    onMounted(() => {
+      songs.value = store.songList;
+      // store.commit("setKeyboardButtonShown", false);
+      // store.dispatch("fetchSongList");
+    });
+
+    return { showAllSongs, filter, selectSong, filteredSongList, songs };
+  },
 });
 </script>
 

@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="25px" height="25px" viewBox="0 0 25 25" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <!-- Generator: Sketch 42 (36781) - http://www.bohemiancoding.com/sketch -->
+    <title>star</title>
+    <desc>Created with Sketch.</desc>
+    <defs></defs>
+    <g id="Page-1" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <g id="Full-Color" transform="translate(-350.000000, -100.000000)">
+            <g id="star" transform="translate(350.000000, 100.000000)">
+                <polygon id="Fill-1" fill="#FFCC00" points="9 9.5002 0.5 9.5002 7.5 15.0002 4.5 24.4992 12.5 18.5002 20.5 24.4992 17.5 15.0002 24.5 9.5002 16 9.5002 12.5 0.5002"></polygon>
+                <path d="M4.8,24.9 C4.41108043,25.1916897 3.87677953,24.8129497 4.02322517,24.3493821 L4.85122517,21.7283821 C4.88267178,21.6288391 4.94448638,21.5416352 5.028,21.479 L12.2,16.1 C12.3777778,15.9666667 12.6222222,15.9666667 12.8,16.1 L19.972,21.479 C20.0555136,21.5416352 20.1173282,21.6288391 20.1487748,21.7283821 L20.9767748,24.3493821 C21.1232205,24.8129497 20.5889196,25.1916897 20.2,24.9 L12.5,19.125 L4.8,24.9 Z" id="Stroke-4" fill="#000000" fill-rule="nonzero" opacity="0.239999995"></path>
+                <polygon id="Stroke-7" stroke="#000000" stroke-linecap="round" stroke-linejoin="round" points="12.5 0.5 16 9.5 24.5 9.5 17.5 15 20.5 24.5 12.5 18.5 4.5 24.5 7.5 15 0.5 9.5 9 9.5"></polygon>
+            </g>
+        </g>
+    </g>
+</svg>

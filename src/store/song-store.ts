@@ -1,6 +1,6 @@
 import { defineStore } from "pinia";
-import { ipcRenderer } from "electron";
 import { useSettingsStore } from "./settings-store";
+import { Song, saveSongJson } from "../services/song-serializer.service";
 
 export const useSongStore = defineStore("song", {
   state: () => ({
@@ -48,14 +48,14 @@ export const useSongStore = defineStore("song", {
         song.favorite = favorite;
 
         const settings = useSettingsStore();
-        ipcRenderer.sendSync("save-songs", settings.dataFilesPath, JSON.stringify(this._songList));
+        saveSongJson(song);
       }
     },
 
-    loadSongs() {
-      const settings = useSettingsStore();
-      this._songList = <Song[]>ipcRenderer.sendSync("load-songs", settings.dataFilesPath).songs;
-    },
+    // loadSongs() {
+    //   const settings = useSettingsStore();
+    //   this._songList = <Song[]>ipcRenderer.sendSync("load-songs", settings.dataFilesPath).songs;
+    // },
 
     setFilter(filter: string): void {
       this._filter = filter;
@@ -70,11 +70,3 @@ export const useSongStore = defineStore("song", {
     },
   },
 });
-
-export type Song = {
-  id: string;
-  name: string;
-  author: string;
-  file: string;
-  favorite: boolean;
-};

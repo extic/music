@@ -19,18 +19,13 @@
   "win": {
     "target": [
       {
-        "target": "nsis",
+        "target": "portable",
         "arch": [
           "x64"
         ]
       }
     ],
-    "artifactName": "${productName}_${version}.${ext}"
+    "artifactName": "${productName}_${arch}_v${version}.${ext}",
+    "icon": "./public/app-icon.ico",
   },
-  "nsis": {
-    "oneClick": false,
-    "perMachine": false,
-    "allowToChangeInstallationDirectory": true,
-    "deleteAppDataOnUninstall": false
-  }
 }

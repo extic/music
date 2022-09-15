@@ -1,68 +1,135 @@
-<script setup lang="ts">
-// This starter template is using Vue 3 <script setup> SFCs
-// Check out https://vuejs.org/api/sfc-script-setup.html#script-setup
-import HelloWorld from './components/HelloWorld.vue'
-</script>
-
 <template>
-  <div class="logo-box">
-    <img class="logo vite" src="./assets/vite.svg" >
-    <img class="logo electron" src="./assets/electron.svg" >
-    <img class="logo vue" src="./assets/vue.svg" >
-  </div>
-  <HelloWorld msg="Hello Vue 3 + TypeScript + Vite" />
-  <div class="static-public">
-    Place static files into the <code>/public</code> folder
-    <img style="width:77px;" :src="'./node.png'" >
-  </div>
+  <router-view />
 </template>
 
-<style>
-#app {
-  font-family: Avenir, Helvetica, Arial, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  text-align: center;
-  color: #2c3e50;
-  margin-top: 60px;
-}
+<script setup lang="ts">
+</script>
 
-.logo-box {
-  display: flex;
-  width: 100%;
-  justify-content: center;
-}
-
-.static-public {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.static-public code {
-  background-color: #eee;
-  padding: 2px 4px;
-  margin: 0 4px;
-  border-radius: 4px;
-  color: #304455;
-}
-
-.logo {
-  height: 6em;
-  padding: 1.5em;
-  will-change: filter;
-  transition: 0.75s;
-}
-
-.logo.vite:hover {
-  filter: drop-shadow(0 0 2em #747bff);
-}
-
-.logo.electron:hover {
-  filter: drop-shadow(0 0 2em #9FEAF9);
-}
-
-.logo.vue:hover {
-  filter: drop-shadow(0 0 2em #249b73);
-}
-</style>
+<style lang="scss">
+  html {
+    width: 100%;
+    height: 100%;
+  }
+  
+  body {
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+  
+    @media (max-width: 1200px) {
+      font-size: 11px;
+    }
+  
+    @media (max-width: 780px) {
+      font-size: 8px;
+    }
+  }
+  
+  #app {
+    font-family: Avenir, Helvetica, Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-align: center;
+    color: #2c3e50;
+    width: 100%;
+    height: 100%;
+  }
+  
+  #nav {
+    padding: 30px;
+  
+    a {
+      font-weight: bold;
+      color: #2c3e50;
+  
+      &.router-link-exact-active {
+        color: #42b983;
+      }
+    }
+  }
+  
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  
+  ::-webkit-scrollbar-button {
+    width: 0;
+    height: 0;
+  }
+  
+  ::-webkit-scrollbar-thumb {
+    background: #69ccef;
+    border: 0 double #ffffff;
+    border-radius: 46px;
+  }
+  
+  ::-webkit-scrollbar-thumb:hover {
+    background: #5da2bc;
+  }
+  
+  ::-webkit-scrollbar-thumb:active {
+    background: #527988;
+  }
+  
+  ::-webkit-scrollbar-track {
+    background: #ffffff;
+    border: 0 double #ffffff;
+    border-radius: 3px;
+  }
+  
+  ::-webkit-scrollbar-track:hover {
+    background: #f9f9f9;
+  }
+  
+  ::-webkit-scrollbar-track:active {
+    background: #f9f9f9;
+  }
+  
+  ::-webkit-scrollbar-corner {
+    background: transparent;
+  }
+  
+  * {
+    box-sizing: border-box;
+  }
+  
+  /* >>> #cursorImg-1 {
+    transition: all 0.2s ease-in-out;
+  } */
+  
+  /* #app {
+    font-family: Avenir, Helvetica, Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-align: center;
+    color: #2c3e50;
+    margin-top: 60px;
+  }
+  
+  .logo-box {
+    display: flex;
+    width: 100%;
+    justify-content: center;
+  }
+  
+  .logo-box span {
+    width: 74px;
+  }
+  
+  .static-public {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .static-public code {
+    background-color: #eee;
+    padding: 2px 4px;
+    margin: 0 4px;
+    border-radius: 4px;
+    color: #304455;
+  } */
+  </style>

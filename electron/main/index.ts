@@ -29,8 +29,10 @@ const indexHtml = join(process.env.DIST, 'index.html')
 
 async function createWindow() {
   win = new BrowserWindow({
-    title: 'Main window',
-    icon: join(process.env.PUBLIC, 'favicon.ico'),
+    title: 'Extremely Music - Loading...',
+    icon: join(process.env.PUBLIC, 'app-icon.ico'),
+    width: 1600,
+    height: 900,
     webPreferences: {
       preload,
       // Warning: Enable nodeIntegration and disable contextIsolation is not secure in production

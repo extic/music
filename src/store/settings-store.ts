@@ -2,15 +2,15 @@ import { ipcRenderer } from "electron";
 import { defineStore } from "pinia";
 import { storage } from "../utils/local_storage";
 
-const homePath = ipcRenderer.sendSync("get-home-path");
-const initialDataFilesPath = storage.getString("data-files-path", `${homePath}/.music`);
-ipcRenderer.sendSync("create-folder", initialDataFilesPath);
-console.debug("initialDataFilesPath", initialDataFilesPath);
+// const homePath = ipcRenderer.sendSync("get-home-path");
+// const initialDataFilesPath = storage.getString("data-files-path", `${homePath}/.music`);
+// ipcRenderer.sendSync("create-folder", initialDataFilesPath);
+// console.debug("initialDataFilesPath", initialDataFilesPath);
 
 export const useSettingsStore = defineStore("settings", {
   state: () => ({
     _shown: false,
-    _dataFilesPath: initialDataFilesPath,
+    _dataFilesPath: 'asdads',//initialDataFilesPath,
   }),
 
   getters: {

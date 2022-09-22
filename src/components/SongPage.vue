@@ -42,6 +42,7 @@ import { getSongPages } from "../services/song-serializer.service";
 import { computed, defineComponent, nextTick, onMounted, onUnmounted, ref } from "vue";
 import { usePlayerStore } from "../store/player-store";
 import { useSongStore } from "../store/song-store";
+import { parseSong, printDebug } from "../utils/parser/song.parser";
 // import { SongParser, VerticalGroup } from "../utils/SongParser";
 // import { SongPlayer } from "../utils/SongPlayer";
 
@@ -79,7 +80,8 @@ export default defineComponent({
 
     onMounted(() => {
       pageImages.value = getSongPages(song.value!!);
-      console.log(pageImages);
+      const songData = parseSong(song.value!!)
+      printDebug(songData);
       showLoading.value = false;
 
       // const parseSong = (osmd: OSMD) => {

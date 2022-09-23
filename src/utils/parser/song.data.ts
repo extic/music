@@ -1,6 +1,6 @@
 export type SongData = {
   pageData: SongPageData;
-  instruments: InstrumentData[];
+  instruments: Instrument[];
   groups: NoteGroup[],
   // sustainPresses: List<SustainPress>,
   // divisions: Int,
@@ -14,7 +14,7 @@ export type SongPageData = {
   pageHeight: number;
 };
 
-export type InstrumentData = {
+export type Instrument = {
   id: string;
   name: string;
   index: number;

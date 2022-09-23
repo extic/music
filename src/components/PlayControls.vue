@@ -8,7 +8,7 @@
       <div class="group">
         <div class="group-label">Play Controls</div>
         <div class="play-buttons">
-          <!-- <button @click="play" :disabled="playing">
+          <button @click="play" :disabled="playing">
             <img src="../assets/images/play.svg" />
             <div>Play</div>
           </button>
@@ -19,18 +19,18 @@
           <button @click="reset">
             <img src="../assets/images/stop.svg" />
             <div>Stop</div>
-          </button> -->
+          </button>
         </div>
       </div>
     </div>
     <div v-else class="group-container">
       <div class="group">
         <div class="group-label">Choose Instrument</div>
-        <!-- <select v-model="selectedInstrument">
+        <select v-model="selectedInstrument">
           <option v-for="instrument in instruments" :value="instrument">
             {{ instrument.name }}
           </option>
-        </select> -->
+        </select>
       </div>
       <div class="group">
         <div class="group-label">Practice</div>
@@ -102,12 +102,12 @@
 </template>
 
 <script lang="ts">
+import { Instrument } from "src/utils/parser/song.data";
 import { defineComponent, computed } from "vue";
 import PlayerSelection from "../components/PlayerSelection.vue";
 // import { midiService } from "../services/midi-service";
 import { usePlayerStore, PlayerType } from "../store/player-store";
-// import { Instrument } from "../utils/SongParser";
-// import { SongPlayer } from "../utils/SongPlayer";
+import { SongPlayer } from "../utils/SongPlayer";
 // import { midi } from "@/store/midi-module";
 // import { midiService } from "@/services/midi-service";
 
@@ -127,18 +127,18 @@ export default defineComponent({
       return playerStore.player;
     });
 
-    // const instruments = computed(() => {
-    //   return playerStore.instruments;
-    // });
+    const instruments = computed(() => {
+      return playerStore.instruments;
+    });
 
-    // const selectedInstrument = computed({
-    //   get(): Instrument | null {
-    //     return playerStore.selectedInstrument;
-    //   },
-    //   set(newValue: Instrument | null): void {
-    //     playerStore.setSelectedInstrument(newValue);
-    //   },
-    // });
+    const selectedInstrument = computed({
+      get(): Instrument | null {
+        return playerStore.selectedInstrument;
+      },
+      set(newValue: Instrument | null): void {
+        playerStore.setSelectedInstrument(newValue);
+      },
+    });
 
     const practiceLeftHand = computed({
       get(): boolean {
@@ -171,12 +171,11 @@ export default defineComponent({
       },
     });
 
-    // const play = SongPlayer.play;
-    // const stop = SongPlayer.stop;
-    // const reset = SongPlayer.reset;
+    const play = SongPlayer.play;
+    const stop = SongPlayer.stop;
+    const reset = SongPlayer.reset;
 
-    return { playing, player, practiceLeftHand, practiceRightHand, autoAccompany };
-    // return { playing, player, instruments, selectedInstrument, practiceLeftHand, practiceRightHand, autoAccompany, play, stop, reset };
+    return { playing, player, instruments, selectedInstrument, practiceLeftHand, practiceRightHand, autoAccompany, play, stop, reset };
   },
 
   // methods: {
@@ -373,6 +372,7 @@ export default defineComponent({
 
       img:hover {
         filter: opacity(1);
+        background: #b0d8e7;
       }
 
       img {
@@ -380,6 +380,7 @@ export default defineComponent({
         height: 3em;
         filter: opacity(0.5);
         transition: filter 0.2s;
+        border-radius: 50%;
       }
     }
   }

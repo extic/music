@@ -1,5 +1,6 @@
 import _ from "lodash";
 import { defineStore } from "pinia";
+import { Instrument, NoteGroup } from "src/utils/parser/song.data";
 // import { Instrument, VerticalGroup } from "../utils/SongParser";
 
 export type PlayerType = "computer" | "human";
@@ -11,12 +12,12 @@ export type PlayerType = "computer" | "human";
 export const usePlayerStore = defineStore("player", {
   state: () => ({
     _player: "computer" as PlayerType,
-    // _instruments: [] as Instrument[],
-    // _selectedInstrument: null as Instrument | null,
+    _instruments: [] as Instrument[],
+    _selectedInstrument: null as Instrument | null,
     _practiceLeftHand: true,
     _practiceRightHand: true,
     _autoAccompany: true,
-    // _groups: [] as VerticalGroup[],
+    _groups: [] as NoteGroup[],
     _bpm: 0,
     _position: 0,
     _playing: false,
@@ -29,13 +30,13 @@ export const usePlayerStore = defineStore("player", {
       return state._player;
     },
 
-    // instruments(state): Instrument[] {
-    //   return state._instruments;
-    // },
+    instruments(state): Instrument[] {
+      return state._instruments;
+    },
 
-    // selectedInstrument(state): Instrument | null {
-    //   return state._selectedInstrument;
-    // },
+    selectedInstrument(state): Instrument | null {
+      return state._selectedInstrument;
+    },
 
     practiceLeftHand(state): boolean {
       return state._practiceLeftHand;
@@ -49,9 +50,9 @@ export const usePlayerStore = defineStore("player", {
       return state._autoAccompany;
     },
 
-    // groups(state): VerticalGroup[] {
-    //   return state._groups;
-    // },
+    groups(state): NoteGroup[] {
+      return state._groups;
+    },
 
     bpm(state): number {
       return state._bpm;
@@ -79,13 +80,13 @@ export const usePlayerStore = defineStore("player", {
       this._player = player;
     },
 
-    // setInstruments(instruments: Instrument[]): void {
-    //   this._instruments = instruments;
-    // },
+    setInstruments(instruments: Instrument[]): void {
+      this._instruments = instruments;
+    },
 
-    // setSelectedInstrument(instrument: Instrument | null): void {
-    //   this._selectedInstrument = instrument;
-    // },
+    setSelectedInstrument(instrument: Instrument | null): void {
+      this._selectedInstrument = instrument;
+    },
 
     setPracticeLeftHand(practiceLeftHand: boolean): void {
       this._practiceLeftHand = practiceLeftHand;
@@ -99,9 +100,9 @@ export const usePlayerStore = defineStore("player", {
       this._autoAccompany = autoAccompany;
     },
 
-    // setGroups(groups: VerticalGroup[]): void {
-    //   this._groups = groups;
-    // },
+    setGroups(groups: NoteGroup[]): void {
+      this._groups = groups;
+    },
 
     setBpm(bpm: number): void {
       this._bpm = bpm;

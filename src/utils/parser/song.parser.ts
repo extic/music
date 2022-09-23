@@ -1,5 +1,5 @@
 import { Song } from "src/services/song-serializer.service";
-import { InstrumentData, Note, NoteGroup, SongData, SongPageData } from "./song.data";
+import { Instrument, Note, NoteGroup, SongData, SongPageData } from "./song.data";
 import fs from "fs";
 import { calcNoteNumber } from "./note-number.parser";
 import { findAll, findOne, findOneAsNumber, findAttr, findOneAsString } from "./xml.utils";
@@ -68,7 +68,7 @@ function readPageData(scorePartwise: Element): SongPageData {
   };
 }
 
-function readInstruments(scorePartwise: Element): InstrumentData[] {
+function readInstruments(scorePartwise: Element): Instrument[] {
   const partList = findOne(scorePartwise, "part-list");
   return findAll(partList, "score-part")
     .map((scorePart, index) => {
@@ -76,7 +76,7 @@ function readInstruments(scorePartwise: Element): InstrumentData[] {
         id: findAttr(scorePart, "id"),
         name: findOneAsString(scorePart, "part-name"),
         index
-      } as InstrumentData
+      } as Instrument
     })
 }
 
@@ -85,7 +85,7 @@ type MeasureParsingContext = {
   currTime: number;
 }
 
-function parseMeasures(groups: NoteGroup[], measures: Element[], instrument: InstrumentData) {
+function parseMeasures(groups: NoteGroup[], measures: Element[], instrument: Instrument) {
   const context = { prevTime: 0, currTime: 0 };
 
   for (let measureIndex = 0; measureIndex < measures.length; measureIndex++) {
@@ -97,7 +97,7 @@ function parseMeasures(groups: NoteGroup[], measures: Element[], instrument: Ins
   return groups;
 }
 
-function parseMeasure(groups: NoteGroup[], measure: Element, instrument: InstrumentData, context: MeasureParsingContext, measureNumber: number) {
+function parseMeasure(groups: NoteGroup[], measure: Element, instrument: Instrument, context: MeasureParsingContext, measureNumber: number) {
   const nodes = ([...measure.childNodes] as Element[]).filter((it) => it.nodeName !== '#text');
 
   nodes.map((node) => {

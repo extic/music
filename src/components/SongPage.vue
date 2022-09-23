@@ -89,10 +89,10 @@ export default defineComponent({
       //   // console.log(songData);
       //   // this.groups = songData.verticalGroups;
 
-      //   const playerStore = usePlayerStore();
-      //   playerStore.setInstruments(songData.instruments);
-      //   playerStore.setSelectedInstrument(songData.instruments[0]);
-      //   playerStore.setGroups(songData.verticalGroups);
+      const playerStore = usePlayerStore();
+      playerStore.setInstruments(songData.instruments);
+      playerStore.setSelectedInstrument(songData.instruments[0]);
+      playerStore.setGroups(songData.groups);
       //   playerStore.setBpm(songData.bpm);
       //   SongPlayer.initInstruments();
 

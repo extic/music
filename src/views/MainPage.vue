@@ -3,7 +3,7 @@
     <HeaderBar style="z-index: 20" />
     <router-view />
     <div class="background"></div>
-    <!-- <SettingsPane /> -->
+    <SettingsPane />
     <!-- <EditSongPane /> -->
   </div>
 </template>
@@ -11,12 +11,12 @@
 <script lang="ts">
 import { defineComponent } from "vue";
 import HeaderBar from "../components/HeaderBar.vue";
-// import SettingsPane from "../components/SettingsPane.vue";
+import SettingsPane from "../components/SettingsPane.vue";
 // import EditSongPane from "../components/EditSongPane.vue";
 
 export default defineComponent({
   name: "MainPage",
-  components: { HeaderBar },//, SettingsPane, EditSongPane },
+  components: { HeaderBar, SettingsPane },//, EditSongPane },
 });
 </script>
 

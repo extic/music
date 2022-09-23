@@ -1,16 +1,18 @@
 import { ipcRenderer } from "electron";
+import { fstat } from "fs";
 import { defineStore } from "pinia";
 import { storage } from "../utils/local_storage";
+import fs from "fs";
 
-// const homePath = ipcRenderer.sendSync("get-home-path");
-// const initialDataFilesPath = storage.getString("data-files-path", `${homePath}/.music`);
-// ipcRenderer.sendSync("create-folder", initialDataFilesPath);
-// console.debug("initialDataFilesPath", initialDataFilesPath);
+const homePath = ipcRenderer.sendSync("get-home-path");
+const initialDataFilesPath = storage.getString("data-files-path", `${homePath}/.music`);
+fs.mkdirSync(initialDataFilesPath, { recursive: true });
+console.debug("initialDataFilesPath", initialDataFilesPath);
 
 export const useSettingsStore = defineStore("settings", {
   state: () => ({
     _shown: false,
-    _dataFilesPath: 'asdads',//initialDataFilesPath,
+    _dataFilesPath: initialDataFilesPath,
   }),
 
   getters: {

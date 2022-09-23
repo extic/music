@@ -1,6 +1,7 @@
 import { app, BrowserWindow, shell, ipcMain } from 'electron'
 import { release } from 'os'
 import { join } from 'path'
+import { eventRegistrar } from "./event-registrar";
 
 // Disable GPU Acceleration for Windows 7
 if (release().startsWith('6.1')) app.disableHardwareAcceleration()
@@ -43,6 +44,7 @@ async function createWindow() {
       webSecurity: false,//process.env.NODE_ENV !== 'development'
     },
   })
+  win.menuBarVisible = false;
 
   if (app.isPackaged) {
     win.loadFile(indexHtml)
@@ -62,6 +64,8 @@ async function createWindow() {
     if (url.startsWith('https:')) shell.openExternal(url)
     return { action: 'deny' }
   })
+
+  eventRegistrar.registerEvents(win, app);
 }
 
 app.whenReady().then(createWindow)

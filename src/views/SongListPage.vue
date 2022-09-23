@@ -31,6 +31,7 @@ import SongBox from "../components/SongBox.vue";
 import { useRouter } from "vue-router";
 import { filter } from "minimatch";
 import { loadSongs, Song } from "../services/song-serializer.service";
+import { useSettingsStore } from "../store/settings-store";
 
 export default defineComponent({
   name: "SongListPage",
@@ -39,36 +40,31 @@ export default defineComponent({
 
   setup() {
     const router = useRouter();
-    const store = useSongStore();
-
-    const songList = loadSongs('C:/Users/User/music-data-files');
-    store.setSongList(songList);
-
-    console.log(store.songList)
-    
+    const songs = useSongStore();
+    const settings = useSettingsStore();
 
     const filter = computed({
       get(): string {
-        return store.filter;
+        return songs.filter;
       },
       set(newValue: string): void {
-        store.setFilter(newValue);
+        songs.setFilter(newValue);
       },
     });
 
     const showAllSongs = computed({
       get(): boolean {
-        return !store.showFavorites;
+        return !songs.showFavorites;
       },
       set(newValue: boolean): void {
-        store.setShowFavorites(!newValue);
+        songs.setShowFavorites(!newValue);
       },
     });
 
-    const songs = ref([] as Song[]);
+    const songList = computed(() => songs.songList);
 
     const filteredSongList = computed(() => {
-      let filteredSongs = songs.value;
+      let filteredSongs = songList.value;
       if (!showAllSongs.value) {
         filteredSongs = filteredSongs.filter((it) => it.favorite);
       }
@@ -83,7 +79,10 @@ export default defineComponent({
     };
 
     onMounted(() => {
-      songs.value = store.songList;
+      songs.loadSongs();
+      // songs.setSongList(songs.songList);
+
+      console.log(songList.value)
       // store.commit("setKeyboardButtonShown", false);
       // store.dispatch("fetchSongList");
     });

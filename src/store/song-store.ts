@@ -1,6 +1,6 @@
 import { defineStore } from "pinia";
 import { useSettingsStore } from "./settings-store";
-import { Song, saveSongJson } from "../services/song-serializer.service";
+import { Song, saveSongJson, loadSongs } from "../services/song-serializer.service";
 
 export const useSongStore = defineStore("song", {
   state: () => ({
@@ -52,10 +52,11 @@ export const useSongStore = defineStore("song", {
       }
     },
 
-    // loadSongs() {
-    //   const settings = useSettingsStore();
-    //   this._songList = <Song[]>ipcRenderer.sendSync("load-songs", settings.dataFilesPath).songs;
-    // },
+    loadSongs() {
+      const settings = useSettingsStore();
+      console.log('loading', settings.dataFilesPath)
+      this._songList = loadSongs(settings.dataFilesPath);
+    },
 
     setFilter(filter: string): void {
       this._filter = filter;

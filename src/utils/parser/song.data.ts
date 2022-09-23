@@ -18,16 +18,27 @@ export type Instrument = {
   id: string;
   name: string;
   index: number;
+  staffCount: number;
 };
 
 export type NoteGroup = {
   time: number,
   duration: number,
-  instruments: { [key: string]: Note[] }
+  instruments: InstrumentStaves[];
   // minPos: Point,
   // maxPos: Point,
   // pageNumber: number,
   measureNumber: number,
+}
+
+export type InstrumentStaves = {
+  instrument: Instrument;
+  staves: Staff[];
+}
+
+export type Staff = {
+  staffNumber: number;
+  notes: Note[];
 }
 
 export type Point = {

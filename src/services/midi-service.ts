@@ -1,3 +1,4 @@
+import { Instrument } from "src/utils/parser/song.data";
 import { useMidiStore } from "../store/midi-store";
 //import { Instrument } from "../utils/SongParser";
 
@@ -143,13 +144,13 @@ export const midiService = {
   //   }
   // },
 
-  // play: (noteNumber: number, velocity: number, instrument: Instrument) => {
-  //   if (selectedOutput) {
-  //     // selectedOutput.send([192 | instrument.midiChannel, instrument.code]);
-  //     selectedOutput.send([128 | instrument.midiChannel, noteNumber, 0]);
-  //     selectedOutput.send([144 | instrument.midiChannel, noteNumber, velocity]);
-  //   }
-  // },
+  play: (noteNumber: number, velocity: number, instrument: Instrument) => {
+    if (selectedOutput) {
+      // selectedOutput.send([192 | instrument.midiChannel, instrument.code]);
+      selectedOutput.send([128 | instrument.index, noteNumber, 0]);
+      selectedOutput.send([144 | instrument.index, noteNumber, velocity]);
+    }
+  },
 
   playCorrectNote: (velocity: number) => {
     if (selectedOutput) {

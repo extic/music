@@ -44,7 +44,22 @@ function triggerKeys() {
 
 function triggerComputerKeys(playerHasKeys: boolean, practiceStaves: number[]) {
   const player = usePlayerStore();
-  // const group = player.groups[player.position];
+  const group = player.groups[player.position];
+
+  group.instruments.forEach((instrumentStaves) => {
+    instrumentStaves.staves.forEach((staff) => {
+      staff.notes
+        .filter((note) => !note.rest)
+        .forEach((note) => {
+          midiService.play(note.noteNumber, 0x40, instrumentStaves.instrument); //, AvailableMidiInstruments[0], 0);
+        })
+    })
+  })
+
+  // Object.values(group.instruments).forEach((instrumentNotes) => {
+  //   const instrument = instrumentNotes.instrument;
+
+  // })
 
   // const staffNotes = group.notes;
   // let computerHasKeys = false;
@@ -62,6 +77,14 @@ function triggerComputerKeys(playerHasKeys: boolean, practiceStaves: number[]) {
   //     });
   // });
 
+    if (player.playing) {
+      const timeoutDelay = 100 * group.duration;
+      console.log(timeoutDelay);
+      setTimeout(() => {
+        advancePosition();
+      }, timeoutDelay);
+    }
+
   // if (player.playing) {
   //   const delayCoefficient = -player.bpm * 36.66 + 5866;
   //   const timeoutDelay = playerHasKeys && !computerHasKeys ? 0 : group.length * delayCoefficient;
@@ -72,18 +95,18 @@ function triggerComputerKeys(playerHasKeys: boolean, practiceStaves: number[]) {
 }
 
 function advancePosition() {
-  // const player = usePlayerStore();
-  // const group = player.groups[player.position];
+  const player = usePlayerStore();
+  const group = player.groups[player.position];
   // updateVirtualOnKeysTime(group.length);
   // console.log(player.virtualOnKeys);
 
   // // console.log("advancePosition", player.playing);
-  // if (!player.playing) {
-  //   return;
-  // }
-  // player.setPosition(player.position + 1);
+  if (!player.playing) {
+    return;
+  }
+  player.setPosition(player.position + 1);
 
-  // triggerKeys();
+  triggerKeys();
 }
 
 function updateVirtualOnKeysTime(amount: number) {

@@ -18,6 +18,14 @@ export function findOneAsString(element: Element, subElement: string): string {
   return findOne(element, subElement).textContent!!;
 }
 
+export function findOptionalOneAsInteger(element: Element, subElement: string): number | undefined {
+  const number = element.querySelector(subElement)?.textContent ?? undefined;
+  if (number) {
+    return parseInt(number, 10);
+  }
+  return undefined;
+}
+
 export function findOneAsNumber(element: Element, subElement: string): number {
   return parseFloat(findOne(element, subElement).textContent!!);
 }

@@ -43,6 +43,7 @@
 </template>
 
 <script lang="ts">
+import { SongPlayer } from "../utils/SongPlayer";
 import { computed, defineComponent, ref } from "vue";
 import { useRouter } from "vue-router";
 import { useLayoutStore } from "../store/layout-store";
@@ -72,7 +73,7 @@ export default defineComponent({
 //       // store.dispatch("resetPlay");
       songs.setSelectedSong(null);
       layout.setKeyboardButtonShown(false);
-//       SongPlayer.reset();
+      SongPlayer.reset();
       router.push({ name: "SongList" });
     };
 

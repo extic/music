@@ -1,8 +1,8 @@
 import { Song } from "src/services/song-serializer.service";
-import { Instrument, Note, NoteGroup, SongData, SongPageData } from "./song.data";
+import { Instrument, InstrumentStaves, Note, NoteGroup, SongData, SongPageData, Staff } from "./song.data";
 import fs from "fs";
 import { calcNoteNumber } from "./note-number.parser";
-import { findAll, findOne, findOneAsNumber, findAttr, findOneAsString } from "./xml.utils";
+import { findAll, findOne, findOneAsNumber, findAttr, findOneAsString, findOptionalOneAsInteger } from "./xml.utils";
 
 export function parseSong(song: Song): SongData {
   const dom = readSong(song);
@@ -12,13 +12,13 @@ export function parseSong(song: Song): SongData {
   const instruments = readInstruments(scorePartwise);
   const groups: NoteGroup[] = []
 
-  instruments.forEach((instrument) => {
-    const part = scorePartwise.querySelector(`part[id=${instrument.id}]`)
+  instruments.forEach((currInstrument) => {
+    const part = scorePartwise.querySelector(`part[id=${currInstrument.id}]`)
     if (!part) {
-      throw Error(`Cannot parse musicxml, missing part data for id=${instrument.id}`);
+      throw Error(`Cannot parse musicxml, missing part data for id=${currInstrument.id}`);
     }
     const measures = findAll(part, 'measure');
-    parseMeasures(groups, measures, instrument);
+    parseMeasures(groups, measures, currInstrument, instruments);
   })
 
   return {
@@ -31,15 +31,16 @@ export function parseSong(song: Song): SongData {
 export function printDebug(songData: SongData) {
   songData.groups.forEach((group) => {
     console.log(`Group ${group.time}, duration=${group.duration}, measure=${group.measureNumber}`)
-    Object.keys(group.instruments).forEach((instrument: string) => {
-      console.log(`    Instrument ${instrument}:`);
-      group.instruments[instrument].forEach((note) => {
-        console.log(`        ${note.rest ? 'Rest' : 'Note ' + note.noteNumber}, duration=${note.duration}`)
+    group.instruments.forEach((instrumentStaves) => {
+      console.log(`    Instrument ${instrumentStaves.instrument.id}:`);
+      instrumentStaves.staves.forEach((staff) => {
+        console.log(`        Staff ${staff.staffNumber}:`);
+        staff.notes.forEach((note) => {
+          console.log(`            ${note.rest ? 'Rest' : 'Note ' + note.noteNumber}, duration=${note.duration}`)
+        });
       })
     })
   })
-
-
 }
 
 function readSong(song: Song): Document {
@@ -72,10 +73,20 @@ function readInstruments(scorePartwise: Element): Instrument[] {
   const partList = findOne(scorePartwise, "part-list");
   return findAll(partList, "score-part")
     .map((scorePart, index) => {
+      const id = findAttr(scorePart, "id")
+
+      const part = scorePartwise.querySelector(`part[id=${id}]`)!!;
+      const firstMeasure = part.querySelector(`measure[number='1']`)!!;
+      const attributes = findOne(firstMeasure, 'attributes');
+      const staffCount = parseInt(attributes.querySelector('staves')?.textContent ?? '1');
+
+      console.log(id, staffCount);
+
       return {
-        id: findAttr(scorePart, "id"),
+        id,
         name: findOneAsString(scorePart, "part-name"),
-        index
+        index,
+        staffCount,
       } as Instrument
     })
 }
@@ -83,15 +94,16 @@ function readInstruments(scorePartwise: Element): Instrument[] {
 type MeasureParsingContext = {
   prevTime: number;
   currTime: number;
+  instruments: Instrument[];
 }
 
-function parseMeasures(groups: NoteGroup[], measures: Element[], instrument: Instrument) {
-  const context = { prevTime: 0, currTime: 0 };
+function parseMeasures(groups: NoteGroup[], measures: Element[], currInstrument: Instrument, instruments: Instrument[]) {
+  const context: MeasureParsingContext = { prevTime: 0, currTime: 0, instruments };
 
   for (let measureIndex = 0; measureIndex < measures.length; measureIndex++) {
     const measure = measures[measureIndex];
 
-    parseMeasure(groups, measure, instrument, context, measureIndex);
+    parseMeasure(groups, measure, currInstrument, context, measureIndex);
   }
 
   return groups;
@@ -110,7 +122,7 @@ function parseMeasure(groups: NoteGroup[], measure: Element, instrument: Instrum
 
         let currGroup = groups.find((it) => it.time === context.currTime);
         if (!currGroup) {
-          currGroup = createNewGroup(context.currTime, measureNumber)
+          currGroup = createNewGroup(context, measureNumber)
           const previousGroupIndex = findPreviousGroupIndex(groups, context.currTime);
           if (previousGroupIndex === -1) {
             groups.push(currGroup);
@@ -119,10 +131,7 @@ function parseMeasure(groups: NoteGroup[], measure: Element, instrument: Instrum
           }
         }
 
-        if (!currGroup.instruments[instrument.id]) {
-          currGroup.instruments[instrument.id] = [];
-        }
-        currGroup.instruments[instrument.id].push(parsedNote.note);
+        currGroup.instruments[instrument.index].staves[parsedNote.staffNumber].notes.push(parsedNote.note);
         currGroup.duration = Math.min(currGroup.duration, parsedNote.note.duration);
 
         context.prevTime = context.currTime;
@@ -147,27 +156,46 @@ function parseMeasure(groups: NoteGroup[], measure: Element, instrument: Instrum
   })
 }
 
-type ParsedNote = { note: Note, chord: boolean };
+type ParsedNote = { note: Note, chord: boolean, staffNumber: number };
 
 function parseNote(noteElement: Element): ParsedNote {
   const rest = !!noteElement.querySelector('rest');
   const duration = findOneAsNumber(noteElement, 'duration');
   const chord = !!noteElement.querySelector('chord');
+  const staffNumber = findOptionalOneAsInteger(noteElement, 'staff') ?? 1;
   return {
     note: {
       duration,
       noteNumber: rest ? 0 : calcNoteNumber(noteElement, 0, {}),
       rest
     },
-    chord
+    chord,
+    staffNumber: staffNumber - 1,
   };
 }
 
-function createNewGroup(time: number, measureNumber: number): NoteGroup {
+function createNewGroup(context: MeasureParsingContext, measureNumber: number): NoteGroup {
+  const instrumentStavesList = context.instruments.map((instrument) => {
+    const instrumentStaves: InstrumentStaves = {
+      instrument,
+      staves: [],
+    };
+
+    for (let staffNumber = 0; staffNumber < instrument.staffCount; staffNumber++) {
+      instrumentStaves.staves.push({
+        notes: [],
+        staffNumber,
+      });
+    }
+
+    return instrumentStaves;
+  });
+
+  // const staves = Array(context.instruments.length).fill(0);
   return {
-    time,
+    time: context.currTime,
     duration: 100000,
-    instruments: {},
+    instruments: instrumentStavesList,
     measureNumber,
   }
 }

@@ -34,7 +34,7 @@
       </div>
       <div class="group">
         <div class="group-label">Practice</div>
-        <!-- <div v-if="(selectedInstrument?.staffIndexes?.length ?? 1) > 1">
+        <div v-if="(selectedInstrument?.staffCount ?? 1) > 1">
           <div class="practice-buttons">
             <button :class="{ selected: practiceLeftHand }" class="hand-button left-hand" @click="practiceLeftHand = !practiceLeftHand">
               <img alt="left hand" src="../assets/images/hand-left.svg" />
@@ -45,7 +45,7 @@
               <span>Right Hand</span>
             </button>
           </div>
-        </div> -->
+        </div>
         <div @click="autoAccompany = !autoAccompany" class="checkbox">
           <input :checked="autoAccompany" type="checkbox" />
           <label>Accompany with other hand / instruments</label>

@@ -25,7 +25,7 @@
 </template>
 
 <script lang="ts">
-import { computed, defineComponent, onMounted, ref } from "vue";
+import { computed, defineComponent } from "vue";
 import { useSongStore } from "../store/song-store";
 import SongBox from "../components/SongBox.vue";
 import { useRouter } from "vue-router";
@@ -77,15 +77,6 @@ export default defineComponent({
     const selectSong = (song: Song) => {
       router.push({ name: "Song", params: { songId: song.id } });
     };
-
-    onMounted(() => {
-      songs.loadSongs();
-      // songs.setSongList(songs.songList);
-
-      console.log(songList.value)
-      // store.commit("setKeyboardButtonShown", false);
-      // store.dispatch("fetchSongList");
-    });
 
     return { showAllSongs, filter, selectSong, filteredSongList, songs };
   },

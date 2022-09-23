@@ -99,13 +99,15 @@ $container-padding: 1em;
   box-sizing: content-box;
   display: grid;
   grid-gap: 1em;
-  grid-template-columns: minmax(15em, 20vw) auto;
+  grid-template-columns: min-content 1fr;
+  // grid-template-columns: minmax(15em, 20vw) auto;
   grid-template-rows: min-content 1fr;
   grid-template-areas:
     "controls keyboard"
     "controls note-sheet";
 
   &.notes-only {
+    grid-template-columns: min-content 1fr;
     grid-template-rows: 1fr;
     grid-template-areas: "controls note-sheet";
   }

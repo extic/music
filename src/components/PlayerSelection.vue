@@ -64,6 +64,7 @@ export default defineComponent({
     border: 1px solid transparent;
     transition: background-color 0.1s;
     cursor: pointer;
+    font-size: 1em;
 
     img {
       width: 3em;
@@ -98,14 +99,15 @@ export default defineComponent({
       background-color: #69ccef;
       border-radius: 50%;
       position: absolute;
-      top: -0.5em;
-      left: -0.3em;
+      top: -0.55em;
+      left: -0.8em;
       transition: left 0.1s ease-in-out, right 0.1s ease-in-out;
       box-shadow: 0 0 4px 2px lightgray;
       cursor: pointer;
+      font-size: 1em;
 
       &.selected {
-        left: 2em;
+        left: 1.8em;
       }
     }
   }

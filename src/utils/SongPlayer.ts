@@ -79,7 +79,6 @@ function triggerComputerKeys(playerHasKeys: boolean, practiceStaves: number[]) {
 
     if (player.playing) {
       const timeoutDelay = 100 * group.duration;
-      console.log(timeoutDelay);
       setTimeout(() => {
         advancePosition();
       }, timeoutDelay);

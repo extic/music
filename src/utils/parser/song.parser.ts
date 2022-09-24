@@ -1,8 +1,10 @@
 import { Song } from "src/services/song-serializer.service";
 import { Instrument, InstrumentStaves, Note, NoteGroup, SongData, SongPageData, Staff } from "./song.data";
 import fs from "fs";
-import { calcNoteNumber } from "./note-number.parser";
-import { findAll, findOne, findOneAsNumber, findAttr, findOneAsString, findOptionalOneAsInteger } from "./xml.utils";
+import { AccidentalOverrides, calcNoteNumber } from "./note-number.parser";
+import { findAll, findOne, findOneAsNumber, findAttr, findOneAsString, findOptionalOneAsInt } from "./xml.utils";
+
+type ParsedNote = { note: Note, chord: boolean, staffNumber: number };
 
 export function parseSong(song: Song): SongData {
   const dom = readSong(song);
@@ -95,13 +97,15 @@ type MeasureParsingContext = {
   prevTime: number;
   currTime: number;
   instruments: Instrument[];
+  key: number;
 }
 
 function parseMeasures(groups: NoteGroup[], measures: Element[], currInstrument: Instrument, instruments: Instrument[]) {
-  const context: MeasureParsingContext = { prevTime: 0, currTime: 0, instruments };
+  const context: MeasureParsingContext = { prevTime: 0, currTime: 0, instruments, key: 0 };
 
   for (let measureIndex = 0; measureIndex < measures.length; measureIndex++) {
     const measure = measures[measureIndex];
+    context.key = getMeasureKey(measure) ?? context.key;
 
     parseMeasure(groups, measure, currInstrument, context, measureIndex);
   }
@@ -110,12 +114,14 @@ function parseMeasures(groups: NoteGroup[], measures: Element[], currInstrument:
 }
 
 function parseMeasure(groups: NoteGroup[], measure: Element, instrument: Instrument, context: MeasureParsingContext, measureNumber: number) {
+  const accidentalOverrides: AccidentalOverrides = {};
+
   const nodes = ([...measure.childNodes] as Element[]).filter((it) => it.nodeName !== '#text');
 
   nodes.map((node) => {
     switch (node.nodeName) {
       case 'note': {
-        const parsedNote = parseNote(node);
+        const parsedNote = parseNote(node, context, accidentalOverrides);
         if (parsedNote.chord) {
           context.currTime = context.prevTime;
         }
@@ -156,17 +162,15 @@ function parseMeasure(groups: NoteGroup[], measure: Element, instrument: Instrum
   })
 }
 
-type ParsedNote = { note: Note, chord: boolean, staffNumber: number };
-
-function parseNote(noteElement: Element): ParsedNote {
+function parseNote(noteElement: Element, context: MeasureParsingContext, accidentalOverrides: AccidentalOverrides): ParsedNote {
   const rest = !!noteElement.querySelector('rest');
   const duration = findOneAsNumber(noteElement, 'duration');
   const chord = !!noteElement.querySelector('chord');
-  const staffNumber = findOptionalOneAsInteger(noteElement, 'staff') ?? 1;
+  const staffNumber = findOptionalOneAsInt(noteElement, 'staff') ?? 1;
   return {
     note: {
       duration,
-      noteNumber: rest ? 0 : calcNoteNumber(noteElement, 0, {}),
+      noteNumber: rest ? 0 : calcNoteNumber(noteElement, context.key, accidentalOverrides),
       rest
     },
     chord,
@@ -203,4 +207,16 @@ function createNewGroup(context: MeasureParsingContext, measureNumber: number): 
 function findPreviousGroupIndex(groups: NoteGroup[], time: number): number {
   const remaining = groups.filter((it) => it.time < time)
   return remaining.length;
+}
+
+function getMeasureKey(measure: Element): number | undefined {
+  const attributes = measure.querySelector('attributes');
+  if (!attributes) {
+    return;
+  }
+  const key = attributes.querySelector('key');
+  if (!key) {
+    return;
+  }
+  return findOptionalOneAsInt(key, 'fifths');
 }

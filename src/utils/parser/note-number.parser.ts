@@ -77,10 +77,10 @@ function determineForStep(
   keyDown: number
 ): NoteNumberAndAccidental {
   let accidental = 0;
-  if (key > 2) {
+  if (key >= keyUp) {
     accidental = 1;
   }
-  if (key < -6) {
+  if (key <= keyDown) {
     accidental = -1;
   }
   return { noteNumber, accidental };

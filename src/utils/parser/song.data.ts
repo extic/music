@@ -50,6 +50,6 @@ export type Note = {
   duration: number;
   noteNumber: number;
   // hand: number;
-  // tieStop: boolean;
+  tieStop: boolean;
   rest: boolean;
 }

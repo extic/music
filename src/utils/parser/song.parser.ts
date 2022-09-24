@@ -167,11 +167,15 @@ function parseNote(noteElement: Element, context: MeasureParsingContext, acciden
   const duration = findOneAsNumber(noteElement, 'duration');
   const chord = !!noteElement.querySelector('chord');
   const staffNumber = findOptionalOneAsInt(noteElement, 'staff') ?? 1;
+  const tie = noteElement.querySelector('tie');
+  const tieStop = tie ? findAttr(tie, 'type') === 'stop' : false;
+
   return {
     note: {
       duration,
       noteNumber: rest ? 0 : calcNoteNumber(noteElement, context.key, accidentalOverrides),
-      rest
+      rest,
+      tieStop
     },
     chord,
     staffNumber: staffNumber - 1,

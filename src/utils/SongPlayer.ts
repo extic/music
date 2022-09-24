@@ -49,7 +49,7 @@ function triggerComputerKeys(playerHasKeys: boolean, practiceStaves: number[]) {
   group.instruments.forEach((instrumentStaves) => {
     instrumentStaves.staves.forEach((staff) => {
       staff.notes
-        .filter((note) => !note.rest)
+        .filter((note) => !note.rest && !note.tieStop)
         .forEach((note) => {
           midiService.play(note.noteNumber, 0x40, instrumentStaves.instrument); //, AvailableMidiInstruments[0], 0);
         })

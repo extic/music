@@ -118,10 +118,14 @@ function parseMeasure(groups: NoteGroup[], measure: Element, instrument: Instrum
 
   const nodes = ([...measure.childNodes] as Element[]).filter((it) => it.nodeName !== '#text');
 
+  console.log(measureNumber);
   nodes.map((node) => {
     switch (node.nodeName) {
       case 'note': {
         const parsedNote = parseNote(node, context, accidentalOverrides);
+        if (!parsedNote) {
+          return;
+        }
         if (parsedNote.chord) {
           context.currTime = context.prevTime;
         }
@@ -162,7 +166,12 @@ function parseMeasure(groups: NoteGroup[], measure: Element, instrument: Instrum
   })
 }
 
-function parseNote(noteElement: Element, context: MeasureParsingContext, accidentalOverrides: AccidentalOverrides): ParsedNote {
+function parseNote(noteElement: Element, context: MeasureParsingContext, accidentalOverrides: AccidentalOverrides): ParsedNote | undefined {
+  const grace = !!noteElement.querySelector('grace');
+  if (grace) {
+    return;
+  }
+
   const rest = !!noteElement.querySelector('rest');
   const duration = findOneAsNumber(noteElement, 'duration');
   const chord = !!noteElement.querySelector('chord');

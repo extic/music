@@ -24,7 +24,7 @@ type MeasureParsingContext = {
   key: number;
   instruments: Instrument[];
   instrument: Instrument;
-  measureNumber: number;
+  measure: Measure;
 }
 
 type MeasuresAndGroups = { measures: Measure[], groups: NoteGroup[] };
@@ -37,7 +37,7 @@ export function parseSong(song: Song): SongData {
   const pageData = readPageData(scorePartwise);
   const instruments = readInstruments(scorePartwise);
   const measures = parseMeasures(scorePartwise, instruments, pageData);
-  // const groups = parseGroups(scorePartwise, instruments, measures);
+  const groups = parseGroups(scorePartwise, instruments, measures);
 
   pageData.pageCount = (max(measures.map((it) => it.pageNumber)) ?? 0) + 1;
 
@@ -54,7 +54,7 @@ export function parseSong(song: Song): SongData {
     pageData,
     instruments,
     measures,
-    groups: [],
+    groups,
   } as SongData;
 }
 
@@ -251,11 +251,28 @@ function convertToMeasures(parsedMeasures: ParsedMeasure[], pageData: PageData):
   })
 }
 
+function parseGroups(scorePartwise: Element, instruments: Instrument[], measures: Measure[]): NoteGroup[] {
+  const groups: NoteGroup[] = []
+
+  instruments.forEach((currInstrument) => {
+    const part = findOne(scorePartwise, `part[id=${currInstrument.id}]`)
+    const context = { groupId: 0, prevTime: 0, currTime: 0, instruments, instrument: currInstrument } as MeasureParsingContext;
+
+    measures.forEach((measure) => {
+      const measureElement = findOne(part, `measure[number="${measure.number + 1}"]`);
+      context.key = getMeasureKey(measureElement) ?? context.key;
+      context.measure = measure;
+
+      parseMeasureNotes(groups, measureElement, context);
+    })
+  });
+
+  calcGroupPositioning(groups);
+
+  return groups;
+}
 
 
-// function readMeasuresAndGroups(scorePartwise: Element, instruments: Instrument[]): MeasuresAndGroups {
-//   const measures: Measure[] = [];
-//   const groups: NoteGroup[] = []
 
 //   const parsedMeasures: ParsedMeasure[] = [];
 //   instruments.forEach((currInstrument) => {
@@ -435,11 +452,12 @@ function createNewGroup(context: MeasureParsingContext): NoteGroup {
     time: context.currTime,
     duration: 100000,
     instruments: instrumentStavesList,
-    measureNumber: context.measureNumber,
-    minPos: { x : 0, y: 0 },
-    maxPos: { x : 0, y: 0 },
-    width: 0,
-    height: 0,
+    measure: context.measure,
+    pos: { x : 0, y: 0 },
+    dimension: {
+      width: 0,
+      height: 0,
+    },
   }
 }
 
@@ -464,11 +482,14 @@ function calcGroupPositioning(groups: NoteGroup[]) {
   groups.forEach((group) => {
     const notes = group.instruments.flatMap((it) => it.staves).flatMap((it) => it.notes)
     const minX = minBy(notes, ((it) => it.pos.x))?.pos.x ?? 0;
-    const minY = minBy(notes, ((it) => it.pos.y))?.pos.y ?? 0;
 
-    group.minPos = { x: minX, y: minY };
-    group.maxPos = { x: minX + 20, y: minY + 20 };
-    group.width = group.maxPos.x - group.minPos.x;
-    group.height = group.maxPos.y - group.minPos.y;
+    group.pos = {
+      x: minX + group.measure.pos.x + 3,
+      y: group.measure.pos.y - 30,
+    };
+    group.dimension = {
+      width: 26,
+      height: group.measure.dimension.height + 60,
+    }
   })
 }

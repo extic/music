@@ -37,12 +37,9 @@ export type NoteGroup = {
   time: number,
   duration: number,
   instruments: InstrumentStaves[];
-  minPos: Point,
-  maxPos: Point,
-  width: number,
-  height: number,
-  // pageNumber: number,
-  measureNumber: number,
+  pos: Point,
+  dimension: Dimension,
+  measure: Measure,
 }
 
 export type InstrumentStaves = {

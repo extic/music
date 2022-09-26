@@ -21,7 +21,7 @@
           >
           <!-- @click="groupClicked(group)" -->
 
-          <!-- <div class="hover-trap"></div> -->
+          <div class="hover-trap"></div>
         </div>
         <!-- <div
           v-show="currGroup"
@@ -100,18 +100,21 @@ export default defineComponent({
 
       measurePositions.value = player.measures.map((measure, index) => {
         const posX = measure.pos.x * width / (pageData.pageWidth)// - markerWidth / 3
-        const posY = measure.pos.y * height / (pageData.pageHeight * pageData.pageCount)
-        const measureWidth = measure.dimension.width * width / (pageData.pageWidth)
-        const measureHeight = measure.dimension.height * height / (pageData.pageHeight * pageData.pageCount)
-        return {index, posX, posY, width: measureWidth, height: measureHeight}
+        const posY = measure.pos.y * height / (pageData.pageHeight * pageData.pageCount);
+        const measureWidth = measure.dimension.width * width / pageData.pageWidth;
+        const measureHeight = measure.dimension.height * height / (pageData.pageHeight * pageData.pageCount);
+        return {index, posX, posY, width: measureWidth, height: measureHeight};
       });
       // measurePositions.value = slice(measurePositions.value, 0, 26);
 
       groupPositions.value = player.groups.map((group, index) => {
-        const posX = group.minPos.x * scaling * width / (pageData.pageWidth * scaling) - markerWidth / 3
-        const posY = group.minPos.y * scaling * height / (pageData.pageHeight * pageData.pageCount * scaling) - 30
-        const groupHeight = (group.maxPos.y - group.minPos.y) * scaling * height / (pageData.pageHeight * pageData.pageCount * scaling) + 60
-        return {index, posX, posY, width: width / 50, height: groupHeight}
+        const posX = group.pos.x * width / pageData.pageWidth - markerWidth / 3;
+        const posY = group.pos.y * height / (pageData.pageHeight * pageData.pageCount);
+        const groupWidth = group.dimension.width * width / pageData.pageWidth;
+        const groupHeight = group.dimension.height * height / (pageData.pageHeight * pageData.pageCount);
+        // const groupHeight = (group.maxPos.y - group.minPos.y) * scaling * height / (pageData.pageHeight * pageData.pageCount * scaling) + 60;
+        // return {index, posX, posY, width: width / 50, height: groupHeight};
+        return {index, posX, posY, width: groupWidth, height: groupHeight};
       });
 
       // this.paintCanvas(player(this.$store).position)
@@ -412,7 +415,6 @@ export default defineComponent({
 
   .group {
     position: absolute;
-    background-color: #ff646455;
 
     .hover-trap {
       background-color: transparent;
@@ -422,7 +424,6 @@ export default defineComponent({
       bottom: -20px;
       left: 0;
       right: 0;
-      // background-color: #ff000045;
       border-radius: 3px;
 
       &.selected,

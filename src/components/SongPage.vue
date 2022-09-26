@@ -23,14 +23,14 @@
 
           <div class="hover-trap"></div>
         </div>
-        <!-- <div
+        <div
           v-show="currGroup"
           ref="marker"
           class="marker"
-          :style="{ left: `${currGroup.left}px`, width: `${currGroup.width}px`, top: `${currGroup.top}px`, height: `${currGroup.height}px` }"
+          :style="{ left: `${currGroup.posX}px`, width: `${currGroup.width}px`, top: `${currGroup.posY}px`, height: `${currGroup.height}px` }"
         >
           <div class="marker-highlight"></div>
-        </div> -->
+        </div>
       </div>
       <!-- <ContextMenu ref="noteGroupContextMenu" @contextMenuClosed="contextMenuClosed()">
           <ContextMenuItem :enabled="selectedGroup !== -1" :text="setLoopStartText()" @select="setLoopStart()"></ContextMenuItem>
@@ -75,15 +75,15 @@ export default defineComponent({
     const song = computed(() => songs.selectedSong);
     const pageImages = ref([] as string[]);
 
-    // const currGroup = computed(() => {
-    //   return player.groups[player.position] ?? <VerticalGroup>{ left: 0, top: 0, width: 0, height: 0 };
-    // });
-
     const showLoading = ref(true);
     const container = ref<HTMLDivElement>();
     const marker = ref<HTMLDivElement>();
     const measurePositions = ref([] as ElementPosition[]);
     const groupPositions = ref([] as ElementPosition[]);
+
+    const currGroup = computed(() => {
+      return groupPositions.value[player.position] ?? { posX: 0, posY: 0, width: 0, height: 0 };
+    });
 
     const scrollMarkerIntoView = () => {
       marker.value?.scrollIntoView({ behavior: "smooth", block: "center" });
@@ -191,7 +191,7 @@ export default defineComponent({
       marker.value?.removeEventListener("transitionend", scrollMarkerIntoView);
     });
 
-    return { showLoading, song, pageImages, container, marker, pageLoaded, groupPositions, measurePositions };
+    return { showLoading, song, pageImages, container, marker, pageLoaded, groupPositions, measurePositions, currGroup };
     // return { showLoading, groups, currGroup, osmdDiv, marker, groupClicked };
   },
 

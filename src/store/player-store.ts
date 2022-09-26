@@ -24,6 +24,9 @@ export const usePlayerStore = defineStore("player", {
     _position: 0,
     _playing: false,
     _pressedKeys: [] as number[],
+    _startBlock: undefined as number | undefined,
+    _endBlock: undefined as number | undefined,
+    _playSpeed: 1,
     // _virtualOnKeys: {} as VirtualOnKeys,
   }),
 
@@ -78,6 +81,18 @@ export const usePlayerStore = defineStore("player", {
 
     pressedKeys(state): number[] {
       return state._pressedKeys;
+    },
+
+    startBlock(state): number | undefined {
+      return state._startBlock;
+    },
+
+    endBlock(state): number | undefined {
+      return state._endBlock;
+    },
+
+    playSpeed(state): number {
+      return state._playSpeed;
     },
 
     // virtualOnKeys(state): VirtualOnKeys {
@@ -146,6 +161,18 @@ export const usePlayerStore = defineStore("player", {
 
     removePressedKey(key: number) {
       _.pull(this._pressedKeys, key);
+    },
+
+    setStartBlock(startBlock: number | undefined) {
+      this._startBlock = startBlock;
+    },
+
+    setEndBlock(endBlock: number | undefined) {
+      this._endBlock = endBlock;
+    },
+
+    setPlaySpeed(playSpeed: number) {
+      this._playSpeed = playSpeed;
     },
 
     // resetVirtualOnKeys(staffs: number[]): void {

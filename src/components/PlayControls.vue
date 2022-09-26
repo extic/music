@@ -86,18 +86,18 @@
         <input v-model="accompanyVelocity" max="127" min="0" type="range" />
       </div>
     </div>
-
+  -->
     <div class="group">
       <div class="group-label">Play Speed</div>
       <div>
         <div class="play-speed-labels">
-          <span>x0.5</span>
-          <span>x1</span>
-          <span>x2</span>
+          <span @click="setPlaySpeed(2)">x0.5</span>
+          <span @click="setPlaySpeed(1)">x1</span>
+          <span @click="setPlaySpeed(0.5)">x2</span>
         </div>
-        <input v-model="playSpeed" max="100" min="0" type="range" />
+        <input class="play-speed-input" v-model="playSpeed" max="100" min="0" type="range" />
       </div>
-    </div> -->
+    </div>
   </div>
 </template>
 
@@ -171,11 +171,25 @@ export default defineComponent({
       },
     });
 
+    const playSpeed = computed({
+      get(): number {
+        return -((-0.025 + Math.sqrt(0.025 * 0.025 - 4 * 0.0001 * (2 - playerStore.playSpeed))) / (2 * 0.0001));
+      },
+
+      set(speed: number) {
+        playerStore.setPlaySpeed(0.0001 * speed * speed + -0.025 * speed + 2);
+      },
+    });
+
+    const setPlaySpeed = (playSpeed: number) => {
+      playerStore.setPlaySpeed(playSpeed);
+    };
+
     const play = SongPlayer.play;
     const stop = SongPlayer.stop;
     const reset = SongPlayer.reset;
 
-    return { playing, player, instruments, selectedInstrument, practiceLeftHand, practiceRightHand, autoAccompany, play, stop, reset };
+    return { playing, player, instruments, selectedInstrument, practiceLeftHand, practiceRightHand, autoAccompany, play, stop, reset, playSpeed, setPlaySpeed };
   },
 
   // methods: {
@@ -451,10 +465,15 @@ export default defineComponent({
   //   width: 100%;
   // }
 
-  // .play-speed-labels {
-  //   display: flex;
-  //   justify-content: space-between;
-  // }
+  .play-speed-labels {
+    display: flex;
+    justify-content: space-between;
+    cursor: pointer;
+  }
+
+  .play-speed-input {
+    width: 100%;
+  }
 
   // .disabled {
   //   text-decoration: line-through;

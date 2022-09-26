@@ -10,6 +10,10 @@ export function findAttr(element: Element, attrName: string): string {
   return element.getAttribute(attrName)!!;
 }
 
+export function findAttrInt(element: Element, attrName: string): number {
+  return parseInt(element.getAttribute(attrName)!!, 10);
+}
+
 export function findOptionalOneAsString(element: Element, subElement: string): string | undefined {
   return element.querySelector(subElement)?.textContent ?? undefined;
 }

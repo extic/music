@@ -1,6 +1,6 @@
 import _ from "lodash";
 import { defineStore } from "pinia";
-import { Instrument, NoteGroup } from "src/utils/parser/song.data";
+import { Instrument, Measure, NoteGroup, PageData } from "src/utils/parser/song.data";
 // import { Instrument, VerticalGroup } from "../utils/SongParser";
 
 export type PlayerType = "computer" | "human";
@@ -17,7 +17,9 @@ export const usePlayerStore = defineStore("player", {
     _practiceLeftHand: true,
     _practiceRightHand: true,
     _autoAccompany: true,
+    _measures: [] as Measure[],
     _groups: [] as NoteGroup[],
+    _pageData: {} as PageData,
     _bpm: 0,
     _position: 0,
     _playing: false,
@@ -50,8 +52,16 @@ export const usePlayerStore = defineStore("player", {
       return state._autoAccompany;
     },
 
+    measures(state): Measure[] {
+      return state._measures;
+    },
+
     groups(state): NoteGroup[] {
       return state._groups;
+    },
+
+    pageData(state): PageData {
+      return state._pageData;
     },
 
     bpm(state): number {
@@ -100,8 +110,16 @@ export const usePlayerStore = defineStore("player", {
       this._autoAccompany = autoAccompany;
     },
 
+    setMeasures(measures: Measure[]): void {
+      this._measures = measures;
+    },
+
     setGroups(groups: NoteGroup[]): void {
       this._groups = groups;
+    },
+
+    setPageData(pageData: PageData): void {
+      this._pageData = pageData;
     },
 
     setBpm(bpm: number): void {

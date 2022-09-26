@@ -1,18 +1,29 @@
+import { number } from "yargs";
+
 export type SongData = {
-  pageData: SongPageData;
+  pageData: PageData;
   instruments: Instrument[];
-  groups: NoteGroup[],
+  measures: Measure[];
+  groups: NoteGroup[];
   // sustainPresses: List<SustainPress>,
   // divisions: Int,
   // tempoFactor: Float
 };
 
-export type SongPageData = {
+export type PageData = {
   scaling: number;
   pageCount: number;
   pageWidth: number;
   pageHeight: number;
+  pageMargins: { [type: string]: PageMargins }
 };
+
+export type PageMargins = {
+  leftMargin: number;
+  rightMargin: number;
+  topMargin: number;
+  bottomMargin: number;
+}
 
 export type Instrument = {
   id: string;
@@ -22,11 +33,14 @@ export type Instrument = {
 };
 
 export type NoteGroup = {
+  id: number,
   time: number,
   duration: number,
   instruments: InstrumentStaves[];
-  // minPos: Point,
-  // maxPos: Point,
+  minPos: Point,
+  maxPos: Point,
+  width: number,
+  height: number,
   // pageNumber: number,
   measureNumber: number,
 }
@@ -46,10 +60,26 @@ export type Point = {
   y: number;
 }
 
+export type Dimension = {
+  width: number;
+  height: number;
+}
+
 export type Note = {
   duration: number;
   noteNumber: number;
-  // hand: number;
   tieStop: boolean;
   rest: boolean;
+  restOnWholeMeasure: boolean;
+  pos: Point;
 }
+
+export type Measure = {
+  number: number;
+  pos: Point;
+  dimension: Dimension;
+  pageNumber: number;
+  staveLayouts: StaveLayouts;
+}
+
+export type StaveLayouts = {[instrumentId: string]: number[]};

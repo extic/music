@@ -1,10 +1,34 @@
 import { Song } from "src/services/song-serializer.service";
-import { Instrument, InstrumentStaves, Note, NoteGroup, SongData, SongPageData, Staff } from "./song.data";
+import { Instrument, InstrumentStaves, Note, NoteGroup, Point, SongData, PageData, Staff, PageMargins, Measure, StaveLayouts } from "./song.data";
 import fs from "fs";
 import { AccidentalOverrides, calcNoteNumber } from "./note-number.parser";
-import { findAll, findOne, findOneAsNumber, findAttr, findOneAsString, findOptionalOneAsInt } from "./xml.utils";
+import { findAll, findOne, findOneAsNumber, findAttr, findOneAsString, findOptionalOneAsInt, findAttrInt, findOneAsInt } from "./xml.utils";
+import { forEach, max, minBy, range } from "lodash";
 
-type ParsedNote = { note: Note, chord: boolean, staffNumber: number };
+type ParsedMeasure = {
+  number: number;
+  width: number;
+  newPage: boolean;
+  newSystem: boolean;
+  systemMarginLeft: number;
+  systemMarginRight: number;
+  topSystemDistance: number;
+  systemDistance: number;
+  staveLayouts: StaveLayouts;
+}
+
+type MeasureParsingContext = {
+  groupId: number;
+  prevTime: number;
+  currTime: number;
+  key: number;
+  instruments: Instrument[];
+  instrument: Instrument;
+  measureNumber: number;
+}
+
+type MeasuresAndGroups = { measures: Measure[], groups: NoteGroup[] };
+type ParsedNote = { note: Note, chord: boolean, staffNumber: number, pos: Point };
 
 export function parseSong(song: Song): SongData {
   const dom = readSong(song);
@@ -12,37 +36,41 @@ export function parseSong(song: Song): SongData {
   const scorePartwise = dom.documentElement;
   const pageData = readPageData(scorePartwise);
   const instruments = readInstruments(scorePartwise);
-  const groups: NoteGroup[] = []
+  const measures = parseMeasures(scorePartwise, instruments, pageData);
+  // const groups = parseGroups(scorePartwise, instruments, measures);
 
-  instruments.forEach((currInstrument) => {
-    const part = scorePartwise.querySelector(`part[id=${currInstrument.id}]`)
-    if (!part) {
-      throw Error(`Cannot parse musicxml, missing part data for id=${currInstrument.id}`);
-    }
-    const measures = findAll(part, 'measure');
-    parseMeasures(groups, measures, currInstrument, instruments);
-  })
+  pageData.pageCount = (max(measures.map((it) => it.pageNumber)) ?? 0) + 1;
+
+
+
+
+
+  // const { measures, groups } = readMeasuresAndGroups(scorePartwise, instruments);
+
+
+  // calcGroupPositioning(groups);
 
   return {
     pageData,
     instruments,
-    groups,
+    measures,
+    groups: [],
   } as SongData;
 }
 
 export function printDebug(songData: SongData) {
-  songData.groups.forEach((group) => {
-    console.log(`Group ${group.time}, duration=${group.duration}, measure=${group.measureNumber}`)
-    group.instruments.forEach((instrumentStaves) => {
-      console.log(`    Instrument ${instrumentStaves.instrument.id}:`);
-      instrumentStaves.staves.forEach((staff) => {
-        console.log(`        Staff ${staff.staffNumber}:`);
-        staff.notes.forEach((note) => {
-          console.log(`            ${note.rest ? 'Rest' : 'Note ' + note.noteNumber}, duration=${note.duration}`)
-        });
-      })
-    })
-  })
+  // songData.groups.forEach((group) => {
+  //   console.log(`Group ${group.time}, duration=${group.duration}, measure=${group.measureNumber}`)
+  //   group.instruments.forEach((instrumentStaves) => {
+  //     console.log(`    Instrument ${instrumentStaves.instrument.id}:`);
+  //     instrumentStaves.staves.forEach((staff) => {
+  //       console.log(`        Staff ${staff.staffNumber}:`);
+  //       staff.notes.forEach((note) => {
+  //         console.log(`            ${note.rest ? 'Rest' : 'Note ' + note.noteNumber}, duration=${note.duration}`)
+  //       });
+  //     })
+  //   })
+  // })
 }
 
 function readSong(song: Song): Document {
@@ -53,7 +81,7 @@ function readSong(song: Song): Document {
   return new DOMParser().parseFromString(content, "text/xml");
 }
 
-function readPageData(scorePartwise: Element): SongPageData {
+function readPageData(scorePartwise: Element): PageData {
   const defaults = findOne(scorePartwise, "defaults");
   const scaling = findOne(defaults, "scaling");
   const millimeters = findOneAsNumber(scaling, "millimeters");
@@ -61,14 +89,32 @@ function readPageData(scorePartwise: Element): SongPageData {
   const pageLayout = findOne(defaults, "page-layout");
   const pageWidth = findOneAsNumber(pageLayout, "page-width");
   const pageHeight = findOneAsNumber(pageLayout, "page-height");
+  const pageMargins = readPageMargins(pageLayout);
 
   const dpi = 200;
   return {
     scaling: (millimeters / tenths) * (dpi / 25.4),
-    pageCount: 4,
+    pageCount: 0, //will be calculated later from the measures
     pageWidth,
     pageHeight,
+    pageMargins,
   };
+}
+
+function readPageMargins(pageLayout: Element): { [type: string]: PageMargins} {
+  const pageMargins: { [type: string]: PageMargins} = {};
+
+  findAll(pageLayout, "page-margins").forEach((margins) => {
+    const type = findAttr(margins, "type");
+    pageMargins[type] = {
+      leftMargin: findOneAsNumber(margins, "left-margin"),
+      rightMargin: findOneAsNumber(margins, "right-margin"),
+      topMargin: findOneAsNumber(margins, "top-margin"),
+      bottomMargin: findOneAsNumber(margins, "bottom-margin"),
+    };
+  });
+
+  return pageMargins;
 }
 
 function readInstruments(scorePartwise: Element): Instrument[] {
@@ -82,8 +128,6 @@ function readInstruments(scorePartwise: Element): Instrument[] {
       const attributes = findOne(firstMeasure, 'attributes');
       const staffCount = parseInt(attributes.querySelector('staves')?.textContent ?? '1');
 
-      console.log(id, staffCount);
-
       return {
         id,
         name: findOneAsString(scorePart, "part-name"),
@@ -93,32 +137,203 @@ function readInstruments(scorePartwise: Element): Instrument[] {
     })
 }
 
-type MeasureParsingContext = {
-  prevTime: number;
-  currTime: number;
-  instruments: Instrument[];
-  key: number;
+function parseMeasures(scorePartwise: Element, instruments: Instrument[], pageData: PageData): Measure[] {
+  const parsedMeasures: ParsedMeasure[] = [];
+
+  instruments.forEach((currInstrument) => {
+    const part = findOne(scorePartwise, `part[id=${currInstrument.id}]`)
+    findAll(part, 'measure').forEach((measureElement, index) => {
+      parseMeasure(currInstrument, measureElement, parsedMeasures, index);
+    });
+  });
+
+  return convertToMeasures(parsedMeasures, pageData);
 }
 
-function parseMeasures(groups: NoteGroup[], measures: Element[], currInstrument: Instrument, instruments: Instrument[]) {
-  const context: MeasureParsingContext = { prevTime: 0, currTime: 0, instruments, key: 0 };
+function parseMeasure(instrument: Instrument, measureElement: Element, parsedMeasures: ParsedMeasure[], measureNumber: number) {
+  const width = findAttrInt(measureElement, "width");
+  const print = findOne(measureElement, "print");
 
-  for (let measureIndex = 0; measureIndex < measures.length; measureIndex++) {
-    const measure = measures[measureIndex];
-    context.key = getMeasureKey(measure) ?? context.key;
+  let newPage = false;
+  let newSystem = false;
+  let topSystemDistance = 0;
+  let systemDistance = 0;
+  let systemMarginLeft = 0;
+  let systemMarginRight = 0;
 
-    parseMeasure(groups, measure, currInstrument, context, measureIndex);
+  if (print) {
+    newPage = print.getAttribute("new-page") === "yes";
+    newSystem = print.getAttribute("new-system") === "yes";
+
+    const systemLayout = print.querySelector("system-layout");
+    if (systemLayout) {
+      topSystemDistance = findOptionalOneAsInt(systemLayout, "top-system-distance") ?? 0;
+      systemDistance = findOptionalOneAsInt(systemLayout, "system-distance") ?? 0;
+      const systemMargins = findOne(systemLayout, "system-margins");
+      systemMarginLeft = findOneAsNumber(systemMargins, "left-margin");
+      systemMarginRight = findOneAsNumber(systemMargins, "right-margin");
+    }
   }
 
-  return groups;
+  let parsedMeasure = parsedMeasures.find((it) => it.number === measureNumber);
+  if (!parsedMeasure) {
+    parsedMeasure = {
+      number: measureNumber,
+      width,
+      newPage,
+      newSystem,
+      systemMarginLeft,
+      systemMarginRight,
+      topSystemDistance,
+      systemDistance,
+      staveLayouts: {},
+    };
+    parsedMeasures.push(parsedMeasure);
+  }
+
+  parsedMeasure.staveLayouts[instrument.id] = range(instrument.staffCount).map((staffNumber) => {
+    if (print) {
+      const staffLayout = print.querySelector(`staff-layout[number="${staffNumber + 1}"]`)
+      if (staffLayout) {
+        return findOneAsInt(staffLayout, 'staff-distance');
+      } else {
+        return 0;
+      }
+    } else {
+      return 0;
+    }
+  });
 }
 
-function parseMeasure(groups: NoteGroup[], measure: Element, instrument: Instrument, context: MeasureParsingContext, measureNumber: number) {
+function convertToMeasures(parsedMeasures: ParsedMeasure[], pageData: PageData): Measure[] {
+  let lastFilledStaveLayouts: StaveLayouts = {};
+  let pageNumber = 0;
+  const currPos: Point = { x: 0, y: 0 };
+
+  let lastMeasure: Measure | undefined = undefined;
+  return parsedMeasures.map((parsedMeasure) => {
+    if (parsedMeasure.newPage) {
+      pageNumber++;
+    }
+
+    if (parsedMeasure.newPage || parsedMeasure.newSystem || parsedMeasure.number === 0) {
+      lastFilledStaveLayouts = parsedMeasure.staveLayouts;
+
+      const pageMarginsType = pageNumber % 2 == 0 ? 'even' : 'odd';
+      const pageMargins = pageData.pageMargins[pageMarginsType] ?? pageData.pageMargins['both']
+
+      currPos.x = pageMargins.leftMargin + parsedMeasure.systemMarginLeft;
+
+      if (parsedMeasure.newPage || parsedMeasure.number === 0) {
+        currPos.y = pageMargins.topMargin + parsedMeasure.topSystemDistance + pageNumber * pageData.pageHeight;
+      } else {
+        currPos.y += parsedMeasure.systemDistance + lastMeasure!!.dimension.height;
+      }
+    }
+
+    const staffHeights = Object.values(lastFilledStaveLayouts)
+      .flatMap((it) => it)
+      .map((it) => it + 4 * 10)
+      .reduce((acc, val) => acc + val, 0);
+
+    const measure = {
+      number: parsedMeasure.number,
+      pos: { x: currPos.x, y: currPos.y },
+      dimension: { width: parsedMeasure.width, height: staffHeights },
+      pageNumber,
+      staveLayouts: lastFilledStaveLayouts,
+    } as Measure;
+
+    currPos.x += parsedMeasure.width;
+
+    lastMeasure = measure;
+    return measure;
+  })
+}
+
+
+
+// function readMeasuresAndGroups(scorePartwise: Element, instruments: Instrument[]): MeasuresAndGroups {
+//   const measures: Measure[] = [];
+//   const groups: NoteGroup[] = []
+
+//   const parsedMeasures: ParsedMeasure[] = [];
+//   instruments.forEach((currInstrument) => {
+//     const part = findOne(scorePartwise, `part[id=${currInstrument.id}]`)
+//     findAll(part, 'measure').forEach((measureElement) => {
+//       parseMeasure(currInstrument, measureElement)
+//     });
+
+//   });
+
+//   instruments.forEach((currInstrument) => {
+//     const part = scorePartwise.querySelector(`part[id=${currInstrument.id}]`)
+//     if (!part) {
+//       throw Error(`Cannot parse musicxml, missing part data for id=${currInstrument.id}`);
+//     }
+//     const measureElements = findAll(part, 'measure');
+//     parseMeasures(measures, groups, measureElements, currInstrument, instruments);
+//   });
+
+//   return { measures, groups };
+// }
+
+
+
+// function parseMeasures(measures: Measure[], groups: NoteGroup[], measureElements: Element[], currInstrument: Instrument, instruments: Instrument[]) {
+//   const context: MeasureParsingContext = { groupId: 0, prevTime: 0, currTime: 0, key: 0, instruments, instrument: currInstrument, measureNumber: 0 };
+
+//   for (let measureIndex = 0; measureIndex < measures.length; measureIndex++) {
+//     const measureElement = measureElements[measureIndex];
+//     context.key = getMeasureKey(measureElement) ?? context.key;
+//     context.measureNumber = measureIndex;
+
+//     parseMeasure(groups, measures, measureElement, context);
+//   }
+
+//   return groups;
+// }
+
+// function parseMeasure(groups: NoteGroup[], measures: Measure[], measureElement: Element, context: MeasureParsingContext) {
+//   const width = findAttrInt(measureElement, "width");
+//   const print = findOne(measureElement, "print");
+//   const newPage = print.getAttribute("new-page") === "yes";
+//   const newSystem = print.getAttribute("new-system") === "yes";
+
+//   let systemMarginLeft = 0;
+//   let systemMarginRight = 0;
+//   let topSystemDistance = 0;
+
+//   const systemLayout = measureElement.querySelector("system-layout");
+//   if (systemLayout) {
+//     const topSystemDistance = findOneAsNumber(systemLayout, "system-distance");
+//     const systemMargins = findOne(systemLayout, "system-margins");
+//     const systemMarginLeft = findOneAsNumber(systemMargins, "left-margin");
+//     const systemMarginRight = findOneAsNumber(systemMargins, "right-margin");
+//   }
+
+//   // context.instrument.
+//   // context.instrument.index === 0)
+
+//   measures.push({
+//     number: context.measureNumber,
+//     width,
+//     newPage,
+//     newSystem,
+//     systemMarginLeft,
+//     systemMarginRight,
+//     topSystemDistance,
+//     staveLayouts: {},//[instrumentId: string]: number}
+//   });
+
+//   parseMeasureNotes(groups, measureElement, context);
+// }
+
+function parseMeasureNotes(groups: NoteGroup[], measureElement: Element, context: MeasureParsingContext) {
   const accidentalOverrides: AccidentalOverrides = {};
 
-  const nodes = ([...measure.childNodes] as Element[]).filter((it) => it.nodeName !== '#text');
+  const nodes = ([...measureElement.childNodes] as Element[]).filter((it) => it.nodeName !== '#text');
 
-  console.log(measureNumber);
   nodes.map((node) => {
     switch (node.nodeName) {
       case 'note': {
@@ -132,7 +347,7 @@ function parseMeasure(groups: NoteGroup[], measure: Element, instrument: Instrum
 
         let currGroup = groups.find((it) => it.time === context.currTime);
         if (!currGroup) {
-          currGroup = createNewGroup(context, measureNumber)
+          currGroup = createNewGroup(context)
           const previousGroupIndex = findPreviousGroupIndex(groups, context.currTime);
           if (previousGroupIndex === -1) {
             groups.push(currGroup);
@@ -141,7 +356,7 @@ function parseMeasure(groups: NoteGroup[], measure: Element, instrument: Instrum
           }
         }
 
-        currGroup.instruments[instrument.index].staves[parsedNote.staffNumber].notes.push(parsedNote.note);
+        currGroup.instruments[context.instrument.index].staves[parsedNote.staffNumber].notes.push(parsedNote.note);
         currGroup.duration = Math.min(currGroup.duration, parsedNote.note.duration);
 
         context.prevTime = context.currTime;
@@ -172,26 +387,32 @@ function parseNote(noteElement: Element, context: MeasureParsingContext, acciden
     return;
   }
 
-  const rest = !!noteElement.querySelector('rest');
+  const rest = noteElement.querySelector('rest');
+  const restOnWholeMeasure = rest ? (rest.getAttribute('measure') === 'yes') : false;
   const duration = findOneAsNumber(noteElement, 'duration');
   const chord = !!noteElement.querySelector('chord');
   const staffNumber = findOptionalOneAsInt(noteElement, 'staff') ?? 1;
   const tie = noteElement.querySelector('tie');
   const tieStop = tie ? findAttr(tie, 'type') === 'stop' : false;
+  const posX = findAttrInt(noteElement, 'default-x')
+  const posY = findAttrInt(noteElement, 'default-y')
 
   return {
     note: {
       duration,
       noteNumber: rest ? 0 : calcNoteNumber(noteElement, context.key, accidentalOverrides),
-      rest,
-      tieStop
+      rest: !!rest,
+      restOnWholeMeasure,
+      tieStop,
+      pos: { x: posX, y: posY },
     },
     chord,
     staffNumber: staffNumber - 1,
+    pos: { x: 0, y: 0 },
   };
 }
 
-function createNewGroup(context: MeasureParsingContext, measureNumber: number): NoteGroup {
+function createNewGroup(context: MeasureParsingContext): NoteGroup {
   const instrumentStavesList = context.instruments.map((instrument) => {
     const instrumentStaves: InstrumentStaves = {
       instrument,
@@ -210,10 +431,15 @@ function createNewGroup(context: MeasureParsingContext, measureNumber: number): 
 
   // const staves = Array(context.instruments.length).fill(0);
   return {
+    id: context.groupId++,
     time: context.currTime,
     duration: 100000,
     instruments: instrumentStavesList,
-    measureNumber,
+    measureNumber: context.measureNumber,
+    minPos: { x : 0, y: 0 },
+    maxPos: { x : 0, y: 0 },
+    width: 0,
+    height: 0,
   }
 }
 
@@ -232,4 +458,17 @@ function getMeasureKey(measure: Element): number | undefined {
     return;
   }
   return findOptionalOneAsInt(key, 'fifths');
+}
+
+function calcGroupPositioning(groups: NoteGroup[]) {
+  groups.forEach((group) => {
+    const notes = group.instruments.flatMap((it) => it.staves).flatMap((it) => it.notes)
+    const minX = minBy(notes, ((it) => it.pos.x))?.pos.x ?? 0;
+    const minY = minBy(notes, ((it) => it.pos.y))?.pos.y ?? 0;
+
+    group.minPos = { x: minX, y: minY };
+    group.maxPos = { x: minX + 20, y: minY + 20 };
+    group.width = group.maxPos.x - group.minPos.x;
+    group.height = group.maxPos.y - group.minPos.y;
+  })
 }

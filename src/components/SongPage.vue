@@ -4,17 +4,25 @@
       <div v-if="showLoading" class="loading">
         <img src="../assets/images/loading.gif" />
       </div>
-      <div class="score-inner-container">
-        <img v-for="(page, index) in pageImages" :key="`page-${index}`" :src="page" width="100%"/>
-        <!-- <div
-          v-for="group in groups"
-          :key="group.id"
+      <div ref="container" class="score-inner-container">
+        <img v-for="(page, index) in pageImages" :key="`page-${index}`" :src="page" width="100%" :onload="pageLoaded"/>
+        <div
+          v-for="measure in measurePositions"
+          :key="measure.index"
+          class="measure"
+          :style="{ left: `${measure.posX}px`, width: `${measure.width}px`, top: `${measure.posY}px`, height: `${measure.height}px` }"
+          >
+        </div>
+        <div
+          v-for="group in groupPositions"
+          :key="group.index"
           class="group"
-          :style="{ left: `${group.left}px`, width: `${group.width}px`, top: `${group.top}px`, height: `${group.height}px` }"
-          @click="groupClicked(group)"
-        > -->
-          <!-- <div class="hover-trap"></div>
-        </div> -->
+          :style="{ left: `${group.posX}px`, width: `${group.width}px`, top: `${group.posY}px`, height: `${group.height}px` }"
+          >
+          <!-- @click="groupClicked(group)" -->
+
+          <!-- <div class="hover-trap"></div> -->
+        </div>
         <!-- <div
           v-show="currGroup"
           ref="marker"
@@ -36,15 +44,24 @@
 </template>
 
 <script lang="ts">
-import { ipcRenderer } from "electron";
 import { getSongPages } from "../services/song-serializer.service";
 // import { IOSMDOptions, OpenSheetMusicDisplay as OSMD } from "opensheetmusicdisplay";
 import { computed, defineComponent, nextTick, onMounted, onUnmounted, ref } from "vue";
 import { usePlayerStore } from "../store/player-store";
 import { useSongStore } from "../store/song-store";
 import { parseSong, printDebug } from "../utils/parser/song.parser";
+import { Measure } from "src/utils/parser/song.data";
+import { range, slice } from "lodash";
 // import { SongParser, VerticalGroup } from "../utils/SongParser";
 // import { SongPlayer } from "../utils/SongPlayer";
+
+type ElementPosition = {
+  index: number;
+  posX: number;
+  posY: number;
+  width: number;
+  height: number;
+}
 
 export default defineComponent({
   name: "SongPage",
@@ -58,20 +75,54 @@ export default defineComponent({
     const song = computed(() => songs.selectedSong);
     const pageImages = ref([] as string[]);
 
-    // const groups = computed(() => {
-    //   return player.groups;
-    // });
-
     // const currGroup = computed(() => {
     //   return player.groups[player.position] ?? <VerticalGroup>{ left: 0, top: 0, width: 0, height: 0 };
     // });
 
     const showLoading = ref(true);
-    // const osmdDiv = ref("osmdContainer");
+    const container = ref<HTMLDivElement>();
     const marker = ref<HTMLDivElement>();
+    const measurePositions = ref([] as ElementPosition[]);
+    const groupPositions = ref([] as ElementPosition[]);
 
     const scrollMarkerIntoView = () => {
       marker.value?.scrollIntoView({ behavior: "smooth", block: "center" });
+    };
+
+    const calcElementPositions = () => {
+      const computedStyle = getComputedStyle(container.value!!)
+      const width = parseInt(computedStyle.getPropertyValue("width"), 10)
+      const height = parseInt(computedStyle.getPropertyValue("height"), 10)
+
+      const markerWidth = width / 50
+      const pageData = player.pageData;
+      const scaling = pageData.scaling;
+
+      measurePositions.value = player.measures.map((measure, index) => {
+        const posX = measure.pos.x * width / (pageData.pageWidth)// - markerWidth / 3
+        const posY = measure.pos.y * height / (pageData.pageHeight * pageData.pageCount)
+        const measureWidth = measure.dimension.width * width / (pageData.pageWidth)
+        const measureHeight = measure.dimension.height * height / (pageData.pageHeight * pageData.pageCount)
+        return {index, posX, posY, width: measureWidth, height: measureHeight}
+      });
+      // measurePositions.value = slice(measurePositions.value, 0, 26);
+
+      groupPositions.value = player.groups.map((group, index) => {
+        const posX = group.minPos.x * scaling * width / (pageData.pageWidth * scaling) - markerWidth / 3
+        const posY = group.minPos.y * scaling * height / (pageData.pageHeight * pageData.pageCount * scaling) - 30
+        const groupHeight = (group.maxPos.y - group.minPos.y) * scaling * height / (pageData.pageHeight * pageData.pageCount * scaling) + 60
+        return {index, posX, posY, width: width / 50, height: groupHeight}
+      });
+
+      // this.paintCanvas(player(this.$store).position)
+    };
+
+    let loadedPages = 0;
+    const pageLoaded = () => {
+      loadedPages++;
+      if (loadedPages === pageImages.value.length) {
+        calcElementPositions()
+      }
     };
 
     // const groupClicked = (group: VerticalGroup) => {
@@ -79,9 +130,10 @@ export default defineComponent({
     // };
 
     onMounted(() => {
-      pageImages.value = getSongPages(song.value!!);
       const songData = parseSong(song.value!!)
       printDebug(songData);
+
+      pageImages.value = getSongPages(song.value!!);
       showLoading.value = false;
 
       // const parseSong = (osmd: OSMD) => {
@@ -92,7 +144,9 @@ export default defineComponent({
       const playerStore = usePlayerStore();
       playerStore.setInstruments(songData.instruments);
       playerStore.setSelectedInstrument(songData.instruments[0]);
+      playerStore.setMeasures(songData.measures);
       playerStore.setGroups(songData.groups);
+      playerStore.setPageData(songData.pageData);
       //   playerStore.setBpm(songData.bpm);
       //   SongPlayer.initInstruments();
 
@@ -134,7 +188,7 @@ export default defineComponent({
       marker.value?.removeEventListener("transitionend", scrollMarkerIntoView);
     });
 
-    return { showLoading, song, pageImages, marker };
+    return { showLoading, song, pageImages, container, marker, pageLoaded, groupPositions, measurePositions };
     // return { showLoading, groups, currGroup, osmdDiv, marker, groupClicked };
   },
 
@@ -344,8 +398,21 @@ export default defineComponent({
     }
   }
 
+  .measure {
+    position: absolute;
+    background-color: #6f22ff;
+    opacity: 0;
+    transition: opacity 0.2s;
+
+    &:hover {
+      opacity: 0.1;
+    }
+
+  }
+
   .group {
     position: absolute;
+    background-color: #ff646455;
 
     .hover-trap {
       background-color: transparent;

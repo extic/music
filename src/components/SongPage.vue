@@ -8,19 +8,18 @@
         <img v-for="(page, index) in pageImages" :key="`page-${index}`" :src="page" width="100%" :onload="pageLoaded"/>
         <div
           v-for="measure in measurePositions"
-          :key="measure.index"
+          :key="measure.id"
           class="measure"
           :style="{ left: `${measure.posX}px`, width: `${measure.width}px`, top: `${measure.posY}px`, height: `${measure.height}px` }"
           >
         </div>
         <div
           v-for="group in groupPositions"
-          :key="group.index"
+          :key="group.id"
           class="group"
           :style="{ left: `${group.posX}px`, width: `${group.width}px`, top: `${group.posY}px`, height: `${group.height}px` }"
+          @click="groupClicked(group)"
           >
-          <!-- @click="groupClicked(group)" -->
-
           <div class="hover-trap"></div>
         </div>
         <div
@@ -56,7 +55,7 @@ import { range, slice } from "lodash";
 // import { SongPlayer } from "../utils/SongPlayer";
 
 type ElementPosition = {
-  index: number;
+  id: number;
   posX: number;
   posY: number;
   width: number;
@@ -80,6 +79,7 @@ export default defineComponent({
     const marker = ref<HTMLDivElement>();
     const measurePositions = ref([] as ElementPosition[]);
     const groupPositions = ref([] as ElementPosition[]);
+    const resizeObserver = ref(null as ResizeObserver | null);
 
     const currGroup = computed(() => {
       return groupPositions.value[player.position] ?? { posX: 0, posY: 0, width: 0, height: 0 };
@@ -94,27 +94,22 @@ export default defineComponent({
       const width = parseInt(computedStyle.getPropertyValue("width"), 10)
       const height = parseInt(computedStyle.getPropertyValue("height"), 10)
 
-      const markerWidth = width / 50
       const pageData = player.pageData;
-      const scaling = pageData.scaling;
 
-      measurePositions.value = player.measures.map((measure, index) => {
-        const posX = measure.pos.x * width / (pageData.pageWidth)// - markerWidth / 3
+      measurePositions.value = player.measures.map((measure) => {
+        const posX = measure.pos.x * width / (pageData.pageWidth)
         const posY = measure.pos.y * height / (pageData.pageHeight * pageData.pageCount);
         const measureWidth = measure.dimension.width * width / pageData.pageWidth;
         const measureHeight = measure.dimension.height * height / (pageData.pageHeight * pageData.pageCount);
-        return {index, posX, posY, width: measureWidth, height: measureHeight};
+        return {id: measure.number, posX, posY, width: measureWidth, height: measureHeight};
       });
-      // measurePositions.value = slice(measurePositions.value, 0, 26);
 
-      groupPositions.value = player.groups.map((group, index) => {
-        const posX = group.pos.x * width / pageData.pageWidth - markerWidth / 3;
+      groupPositions.value = player.groups.map((group) => {
+        const posX = group.pos.x * width / pageData.pageWidth - group.dimension.width / 3;
         const posY = group.pos.y * height / (pageData.pageHeight * pageData.pageCount);
         const groupWidth = group.dimension.width * width / pageData.pageWidth;
         const groupHeight = group.dimension.height * height / (pageData.pageHeight * pageData.pageCount);
-        // const groupHeight = (group.maxPos.y - group.minPos.y) * scaling * height / (pageData.pageHeight * pageData.pageCount * scaling) + 60;
-        // return {index, posX, posY, width: width / 50, height: groupHeight};
-        return {index, posX, posY, width: groupWidth, height: groupHeight};
+        return {id: group.id, posX, posY, width: groupWidth, height: groupHeight};
       });
 
       // this.paintCanvas(player(this.$store).position)
@@ -125,12 +120,18 @@ export default defineComponent({
       loadedPages++;
       if (loadedPages === pageImages.value.length) {
         calcElementPositions()
+
+        resizeObserver.value = new ResizeObserver(async () => {
+          calcElementPositions()
+        })
+        // const container = this.$refs.container as HTMLDivElement
+        resizeObserver.value.observe(container.value!!);
       }
     };
 
-    // const groupClicked = (group: VerticalGroup) => {
-    //   player.setPosition(group.id);
-    // };
+    const groupClicked = (group: ElementPosition) => {
+      player.setPosition(group.id);
+    };
 
     onMounted(() => {
       const songData = parseSong(song.value!!)
@@ -155,44 +156,17 @@ export default defineComponent({
 
       //   SongParser.printDebug(songData);
       // };
-
-      // ipcRenderer.send("get-music-xml", songs.selectedSong?.file);
-      // ipcRenderer.once("music-xml-loaded", async (_event, ...args) => {
-      //   class A extends OSMD {
-      //     protected handleResize(startCallback: () => void, endCallback: () => void): void {
-      //       super.handleResize(
-      //         () => {
-      //           startCallback();
-      //         },
-      //         () => {
-      //           endCallback();
-      //           parseSong(this);
-      //           showLoading.value = false;
-      //           nextTick(() => {
-      //             marker.value?.addEventListener("transitionend", scrollMarkerIntoView);
-      //           });
-      //         }
-      //       );
-      //     }
-      //   }
-
-      //   const options: IOSMDOptions = {
-      //     backend: "svg",
-      //     drawTitle: true,
-      //   };
-      //   const osmd = new A(osmdDiv.value, options);
-
-      //   // // // osmd.EngravingRules.RenderSingleHorizontalStaffline = true;
-      //   await osmd.load(args[0]);
-      // });
     });
 
     onUnmounted(() => {
+      if (resizeObserver.value) {
+          resizeObserver.value.disconnect()
+      }
+
       marker.value?.removeEventListener("transitionend", scrollMarkerIntoView);
     });
 
-    return { showLoading, song, pageImages, container, marker, pageLoaded, groupPositions, measurePositions, currGroup };
-    // return { showLoading, groups, currGroup, osmdDiv, marker, groupClicked };
+    return { showLoading, song, pageImages, container, marker, pageLoaded, groupPositions, measurePositions, currGroup, groupClicked };
   },
 
   // mounted() {

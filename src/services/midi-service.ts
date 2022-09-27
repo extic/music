@@ -1,4 +1,4 @@
-import { Instrument } from "src/utils/parser/song.data";
+import { Instrument } from "../utils/parser/song.data";
 import { useMidiStore } from "../store/midi-store";
 //import { Instrument } from "../utils/SongParser";
 

@@ -102,7 +102,7 @@
 </template>
 
 <script lang="ts">
-import { Instrument } from "src/utils/parser/song.data";
+import { Instrument } from "../utils/parser/song.data";
 import { defineComponent, computed } from "vue";
 import PlayerSelection from "../components/PlayerSelection.vue";
 // import { midiService } from "../services/midi-service";

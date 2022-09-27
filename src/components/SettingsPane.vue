@@ -53,7 +53,6 @@ import { defineComponent, ref, watch, computed } from "vue";
 import { AvailableMidiInstruments, MidiDeviceDescriptor, MidiInstrument, midiService } from "../services/midi-service";
 import { useSettingsStore } from "../store/settings-store";
 import { useSongStore } from "../store/song-store";
-import SongListPageVue from "../views/SongListPage.vue";
 
 export default defineComponent({
   name: "SettingsPane",

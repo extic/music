@@ -9,7 +9,7 @@
 </template>
 
 <script lang="ts">
-import { Song } from "src/services/song-serializer.service";
+import { Song } from "../services/song-serializer.service";
 import { defineComponent, PropType } from "vue";
 import { useRouter } from "vue-router";
 import { useSongStore } from "../store/song-store";

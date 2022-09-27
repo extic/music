@@ -1,9 +1,9 @@
-import { Song } from "src/services/song-serializer.service";
 import { Instrument, InstrumentStaves, Note, NoteGroup, Point, SongData, PageData, Staff, PageMargins, Measure, StaveLayouts } from "./song.data";
 import fs from "fs";
 import { AccidentalOverrides, calcNoteNumber } from "./note-number.parser";
 import { findAll, findOne, findOneAsNumber, findAttr, findOneAsString, findOptionalOneAsInt, findAttrInt, findOneAsInt } from "./xml.utils";
 import { forEach, max, minBy, range } from "lodash";
+import { Song } from "../../services/song-serializer.service";
 
 type ParsedMeasure = {
   number: number;

@@ -1,6 +1,6 @@
 import _ from "lodash";
 import { defineStore } from "pinia";
-import { Instrument, Measure, NoteGroup, PageData } from "src/utils/parser/song.data";
+import { Instrument, Measure, NoteGroup, PageData } from "../utils/parser/song.data";
 // import { Instrument, VerticalGroup } from "../utils/SongParser";
 
 export type PlayerType = "computer" | "human";

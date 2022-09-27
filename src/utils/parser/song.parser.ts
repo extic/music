@@ -2,7 +2,7 @@ import { Instrument, InstrumentStaves, Note, NoteGroup, Point, SongData, PageDat
 import fs from "fs";
 import { AccidentalOverrides, calcNoteNumber } from "./note-number.parser";
 import { findAll, findOne, findOneAsNumber, findAttr, findOneAsString, findOptionalOneAsInt, findAttrInt, findOneAsInt } from "./xml.utils";
-import { forEach, max, minBy, range } from "lodash";
+import { forEach, last, max, min, minBy, range, zip } from "lodash";
 import { Song } from "../../services/song-serializer.service";
 
 type ParsedMeasure = {
@@ -51,7 +51,7 @@ export function parseSong(song: Song): SongData {
 
 export function printDebug(songData: SongData) {
   songData.groups.forEach((group) => {
-    console.log(`Group ${group.time}, duration=${group.duration}, measure=${group.measure.number}`)
+    console.log(`Group ${group.id}, time=${group.time}, duration=${group.duration}, measure=${group.measure.number}`)
     group.instruments.forEach((instrumentStaves) => {
       console.log(`    Instrument ${instrumentStaves.instrument.id}:`);
       instrumentStaves.staves.forEach((staff) => {
@@ -258,84 +258,11 @@ function parseGroups(scorePartwise: Element, instruments: Instrument[], measures
     })
   });
 
+  calcGroupTiming(groups);
   calcGroupPositioning(groups);
 
   return groups;
 }
-
-
-
-//   const parsedMeasures: ParsedMeasure[] = [];
-//   instruments.forEach((currInstrument) => {
-//     const part = findOne(scorePartwise, `part[id=${currInstrument.id}]`)
-//     findAll(part, 'measure').forEach((measureElement) => {
-//       parseMeasure(currInstrument, measureElement)
-//     });
-
-//   });
-
-//   instruments.forEach((currInstrument) => {
-//     const part = scorePartwise.querySelector(`part[id=${currInstrument.id}]`)
-//     if (!part) {
-//       throw Error(`Cannot parse musicxml, missing part data for id=${currInstrument.id}`);
-//     }
-//     const measureElements = findAll(part, 'measure');
-//     parseMeasures(measures, groups, measureElements, currInstrument, instruments);
-//   });
-
-//   return { measures, groups };
-// }
-
-
-
-// function parseMeasures(measures: Measure[], groups: NoteGroup[], measureElements: Element[], currInstrument: Instrument, instruments: Instrument[]) {
-//   const context: MeasureParsingContext = { groupId: 0, prevTime: 0, currTime: 0, key: 0, instruments, instrument: currInstrument, measureNumber: 0 };
-
-//   for (let measureIndex = 0; measureIndex < measures.length; measureIndex++) {
-//     const measureElement = measureElements[measureIndex];
-//     context.key = getMeasureKey(measureElement) ?? context.key;
-//     context.measureNumber = measureIndex;
-
-//     parseMeasure(groups, measures, measureElement, context);
-//   }
-
-//   return groups;
-// }
-
-// function parseMeasure(groups: NoteGroup[], measures: Measure[], measureElement: Element, context: MeasureParsingContext) {
-//   const width = findAttrInt(measureElement, "width");
-//   const print = findOne(measureElement, "print");
-//   const newPage = print.getAttribute("new-page") === "yes";
-//   const newSystem = print.getAttribute("new-system") === "yes";
-
-//   let systemMarginLeft = 0;
-//   let systemMarginRight = 0;
-//   let topSystemDistance = 0;
-
-//   const systemLayout = measureElement.querySelector("system-layout");
-//   if (systemLayout) {
-//     const topSystemDistance = findOneAsNumber(systemLayout, "system-distance");
-//     const systemMargins = findOne(systemLayout, "system-margins");
-//     const systemMarginLeft = findOneAsNumber(systemMargins, "left-margin");
-//     const systemMarginRight = findOneAsNumber(systemMargins, "right-margin");
-//   }
-
-//   // context.instrument.
-//   // context.instrument.index === 0)
-
-//   measures.push({
-//     number: context.measureNumber,
-//     width,
-//     newPage,
-//     newSystem,
-//     systemMarginLeft,
-//     systemMarginRight,
-//     topSystemDistance,
-//     staveLayouts: {},//[instrumentId: string]: number}
-//   });
-
-//   parseMeasureNotes(groups, measureElement, context);
-// }
 
 function parseMeasureNotes(groups: NoteGroup[], measureElement: Element, context: MeasureParsingContext) {
   const accidentalOverrides: AccidentalOverrides = {};
@@ -360,12 +287,11 @@ function parseMeasureNotes(groups: NoteGroup[], measureElement: Element, context
           if (previousGroupIndex === -1) {
             groups.push(currGroup);
           } else {
-            groups.splice(previousGroupIndex, 0, currGroup);
+            groups.splice(previousGroupIndex + 1, 0, currGroup);
           }
         }
 
         currGroup.instruments[context.instrument.index].staves[parsedNote.staffNumber].notes.push(parsedNote.note);
-        currGroup.duration = Math.min(currGroup.duration, parsedNote.note.duration);
 
         context.prevTime = context.currTime;
         context.currTime += parsedNote.note.duration;
@@ -437,7 +363,6 @@ function createNewGroup(context: MeasureParsingContext): NoteGroup {
     return instrumentStaves;
   });
 
-  // const staves = Array(context.instruments.length).fill(0);
   return {
     id: context.groupId++,
     time: context.currTime,
@@ -454,7 +379,7 @@ function createNewGroup(context: MeasureParsingContext): NoteGroup {
 
 function findPreviousGroupIndex(groups: NoteGroup[], time: number): number {
   const remaining = groups.filter((it) => it.time < time)
-  return remaining.length;
+  return remaining.length - 1;
 }
 
 function getMeasureKey(measure: Element): number | undefined {
@@ -467,6 +392,17 @@ function getMeasureKey(measure: Element): number | undefined {
     return;
   }
   return findOptionalOneAsInt(key, 'fifths');
+}
+
+function calcGroupTiming(groups: NoteGroup[]) {
+  for (let i = 0; i < groups.length - 1; i++) {
+    const currGroup = groups[i];
+    const nextGroup = groups[i + 1];
+    currGroup.duration = nextGroup.time - currGroup.time;
+  }
+  const lastGroup = last(groups)!!;
+  const allNotes = lastGroup.instruments.flatMap((it) => it.staves).flatMap((it) => it.notes);
+  lastGroup.duration = minBy(allNotes, (it) => it.duration)?.duration ?? 0;
 }
 
 function calcGroupPositioning(groups: NoteGroup[]) {

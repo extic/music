@@ -41,15 +41,6 @@ export function parseSong(song: Song): SongData {
 
   pageData.pageCount = (max(measures.map((it) => it.pageNumber)) ?? 0) + 1;
 
-
-
-
-
-  // const { measures, groups } = readMeasuresAndGroups(scorePartwise, instruments);
-
-
-  // calcGroupPositioning(groups);
-
   return {
     pageData,
     instruments,
@@ -59,18 +50,18 @@ export function parseSong(song: Song): SongData {
 }
 
 export function printDebug(songData: SongData) {
-  // songData.groups.forEach((group) => {
-  //   console.log(`Group ${group.time}, duration=${group.duration}, measure=${group.measureNumber}`)
-  //   group.instruments.forEach((instrumentStaves) => {
-  //     console.log(`    Instrument ${instrumentStaves.instrument.id}:`);
-  //     instrumentStaves.staves.forEach((staff) => {
-  //       console.log(`        Staff ${staff.staffNumber}:`);
-  //       staff.notes.forEach((note) => {
-  //         console.log(`            ${note.rest ? 'Rest' : 'Note ' + note.noteNumber}, duration=${note.duration}`)
-  //       });
-  //     })
-  //   })
-  // })
+  songData.groups.forEach((group) => {
+    console.log(`Group ${group.time}, duration=${group.duration}, measure=${group.measure.number}`)
+    group.instruments.forEach((instrumentStaves) => {
+      console.log(`    Instrument ${instrumentStaves.instrument.id}:`);
+      instrumentStaves.staves.forEach((staff) => {
+        console.log(`        Staff ${staff.staffNumber}:`);
+        staff.notes.forEach((note) => {
+          console.log(`            ${note.rest ? 'Rest' : 'Note ' + note.noteNumber}, duration=${note.duration}`)
+        });
+      })
+    })
+  })
 }
 
 function readSong(song: Song): Document {

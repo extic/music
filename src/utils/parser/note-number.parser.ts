@@ -34,7 +34,7 @@ export function calcNoteNumber(noteElement: Element, key: number, accidentalOver
     accidentalOverrides[noteName] = accidental;
   } else {
     const accidentalOverride = accidentalOverrides[noteName];
-    if (accidentalOverride) {
+    if (accidentalOverride !== undefined) {
       accidental = accidentalOverride;
     }
   }

@@ -9,7 +9,8 @@
       </div>
     </div>
     <div class="controls">
-      <button v-if="song" class="edit-button" @click="showEditSongPane">Edit</button>
+      <button v-if="song" class="control-button" @click="showEditSongPane">Edit</button>
+      <button v-else class="control-button always" @click="showImportSongPane">Import</button>
       <div class="midi">
         <img v-if="isMidiConnected" alt="midi on" src="../assets/images/midi-connected.svg" title="MIDI device connected successfully" />
         <img v-else alt="midi off" class="disconnected" src="../assets/images/midi-disconnected.svg" title="MIDI device is not connected" />
@@ -99,6 +100,10 @@ export default defineComponent({
       songs.setEditSongPaneShown(true);
     };
 
+    const showImportSongPane = (e: Event) => {
+      songs.setImportSongPaneShown(true);
+    };
+
     return {
       isInFullscreen,
       song,
@@ -110,6 +115,7 @@ export default defineComponent({
       setKeyboardShown,
       showSettings,
       showEditSongPane,
+      showImportSongPane,
     };
   },
 });
@@ -128,7 +134,7 @@ export default defineComponent({
   box-sizing: border-box;
   border-bottom: 1px solid gray;
 
-  &:hover > .controls > .edit-button {
+  &:hover > .controls > .control-button {
     opacity: 1;
   }
 
@@ -172,7 +178,7 @@ export default defineComponent({
     align-items: center;
     gap: 1em;
 
-    .edit-button {
+    .control-button {
       opacity: 0;
       transition: opacity 0.2s, background-color 0.2s, border 0.2s, color 0.2s;
       cursor: pointer;
@@ -182,6 +188,10 @@ export default defineComponent({
       padding: 0.2em 1em;
       color: #dfdfdf;
       margin-right: 1em;
+
+      &.always {
+        opacity: 1;
+      }
 
       &:hover {
         background-color: #00000022;

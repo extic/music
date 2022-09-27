@@ -5,6 +5,7 @@
     <div class="background"></div>
     <SettingsPane />
     <EditSongPane />
+    <ImportSongPane />
   </div>
 </template>
 
@@ -13,10 +14,11 @@ import { defineComponent } from "vue";
 import HeaderBar from "../components/HeaderBar.vue";
 import SettingsPane from "../components/SettingsPane.vue";
 import EditSongPane from "../components/EditSongPane.vue";
+import ImportSongPane from "../components/ImportSongPane.vue";
 
 export default defineComponent({
   name: "MainPage",
-  components: { HeaderBar, SettingsPane, EditSongPane },
+  components: { HeaderBar, SettingsPane, EditSongPane, ImportSongPane },
 });
 </script>
 

@@ -40,6 +40,7 @@ export type NoteGroup = {
   pos: Point,
   dimension: Dimension,
   measure: Measure,
+  tempo: number,
 }
 
 export type InstrumentStaves = {
@@ -76,6 +77,7 @@ export type Measure = {
   pos: Point;
   dimension: Dimension;
   pageNumber: number;
+  divisions: number;
   staveLayouts: StaveLayouts;
 }
 

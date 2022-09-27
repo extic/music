@@ -15,6 +15,7 @@ type ParsedMeasure = {
   topSystemDistance: number;
   systemDistance: number;
   staveLayouts: StaveLayouts;
+  divisions: number;
 }
 
 type MeasureParsingContext = {
@@ -25,9 +26,9 @@ type MeasureParsingContext = {
   instruments: Instrument[];
   instrument: Instrument;
   measure: Measure;
+  tempo: number;
 }
 
-type MeasuresAndGroups = { measures: Measure[], groups: NoteGroup[] };
 type ParsedNote = { note: Note, chord: boolean, staffNumber: number, pos: Point };
 
 export function parseSong(song: Song): SongData {
@@ -51,7 +52,7 @@ export function parseSong(song: Song): SongData {
 
 export function printDebug(songData: SongData) {
   songData.groups.forEach((group) => {
-    console.log(`Group ${group.id}, time=${group.time}, duration=${group.duration}, measure=${group.measure.number}`)
+    console.log(`Group ${group.id}, time=${group.time}, duration=${group.duration}, measure=${group.measure.number}, tempo=${group.tempo}, divisions=${group.measure.divisions}`)
     group.instruments.forEach((instrumentStaves) => {
       console.log(`    Instrument ${instrumentStaves.instrument.id}:`);
       instrumentStaves.staves.forEach((staff) => {
@@ -144,6 +145,7 @@ function parseMeasures(scorePartwise: Element, instruments: Instrument[], pageDa
 function parseMeasure(instrument: Instrument, measureElement: Element, parsedMeasures: ParsedMeasure[], measureNumber: number) {
   const width = findAttrInt(measureElement, "width");
   const print = findOne(measureElement, "print");
+  const attributes = findOne(measureElement, "attributes");
 
   let newPage = false;
   let newSystem = false;
@@ -151,6 +153,7 @@ function parseMeasure(instrument: Instrument, measureElement: Element, parsedMea
   let systemDistance = 0;
   let systemMarginLeft = 0;
   let systemMarginRight = 0;
+  let divisions = 0;
 
   if (print) {
     newPage = print.getAttribute("new-page") === "yes";
@@ -166,6 +169,10 @@ function parseMeasure(instrument: Instrument, measureElement: Element, parsedMea
     }
   }
 
+  if (attributes) {
+    divisions = findOptionalOneAsInt(attributes, "divisions") ?? 0;
+  }
+
   let parsedMeasure = parsedMeasures.find((it) => it.number === measureNumber);
   if (!parsedMeasure) {
     parsedMeasure = {
@@ -178,6 +185,7 @@ function parseMeasure(instrument: Instrument, measureElement: Element, parsedMea
       topSystemDistance,
       systemDistance,
       staveLayouts: {},
+      divisions,
     };
     parsedMeasures.push(parsedMeasure);
   }
@@ -199,12 +207,17 @@ function parseMeasure(instrument: Instrument, measureElement: Element, parsedMea
 function convertToMeasures(parsedMeasures: ParsedMeasure[], pageData: PageData): Measure[] {
   let lastFilledStaveLayouts: StaveLayouts = {};
   let pageNumber = 0;
+  let divisions = 0;
   const currPos: Point = { x: 0, y: 0 };
 
   let lastMeasure: Measure | undefined = undefined;
   return parsedMeasures.map((parsedMeasure) => {
     if (parsedMeasure.newPage) {
       pageNumber++;
+    }
+
+    if (parsedMeasure.divisions !== 0) {
+      divisions = parsedMeasure.divisions;
     }
 
     if (parsedMeasure.newPage || parsedMeasure.newSystem || parsedMeasure.number === 0) {
@@ -232,6 +245,7 @@ function convertToMeasures(parsedMeasures: ParsedMeasure[], pageData: PageData):
       pos: { x: currPos.x, y: currPos.y },
       dimension: { width: parsedMeasure.width, height: staffHeights },
       pageNumber,
+      divisions,
       staveLayouts: lastFilledStaveLayouts,
     } as Measure;
 
@@ -247,7 +261,7 @@ function parseGroups(scorePartwise: Element, instruments: Instrument[], measures
 
   instruments.forEach((currInstrument) => {
     const part = findOne(scorePartwise, `part[id=${currInstrument.id}]`)
-    const context = { groupId: 0, prevTime: 0, currTime: 0, instruments, instrument: currInstrument } as MeasureParsingContext;
+    const context = { groupId: 0, prevTime: 0, currTime: 0, instruments, instrument: currInstrument, tempo: 0 } as MeasureParsingContext;
 
     measures.forEach((measure) => {
       const measureElement = findOne(part, `measure[number="${measure.number + 1}"]`);
@@ -260,6 +274,7 @@ function parseGroups(scorePartwise: Element, instruments: Instrument[], measures
 
   calcGroupTiming(groups);
   calcGroupPositioning(groups);
+  calcGroupTempos(groups);
 
   return groups;
 }
@@ -309,6 +324,17 @@ function parseMeasureNotes(groups: NoteGroup[], measureElement: Element, context
         const duration = findOneAsNumber(node, 'duration');
         context.currTime += duration;
         context.prevTime = context.currTime;
+        break;
+      }
+
+      case 'direction': {
+        const sound = node.querySelector('sound');
+        if (sound) {
+          const tempo = sound.getAttribute("tempo");
+          if (tempo) {
+            context.tempo = parseInt(tempo, 10);
+          }
+        }
         break;
       }
     }
@@ -374,6 +400,7 @@ function createNewGroup(context: MeasureParsingContext): NoteGroup {
       width: 0,
       height: 0,
     },
+    tempo: context.tempo,
   }
 }
 
@@ -419,4 +446,15 @@ function calcGroupPositioning(groups: NoteGroup[]) {
       height: group.measure.dimension.height + 60,
     }
   })
+}
+
+function calcGroupTempos(groups: NoteGroup[]) {
+  let lastTempo = 100;
+  groups.forEach((group) => {
+    if (group.tempo !== 0) {
+      lastTempo = group.tempo;
+    } else {
+      group.tempo = lastTempo;
+    }
+  });
 }

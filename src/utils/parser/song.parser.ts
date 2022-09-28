@@ -116,7 +116,7 @@ function readInstruments(scorePartwise: Element): Instrument[] {
       const id = findAttr(scorePart, "id")
 
       const part = scorePartwise.querySelector(`part[id=${id}]`)!!;
-      const firstMeasure = part.querySelector(`measure[number='1']`)!!;
+      const firstMeasure = part.querySelector(`measure:first-child`)!!;
       const attributes = findOne(firstMeasure, 'attributes');
       const staffCount = parseInt(attributes.querySelector('staves')?.textContent ?? '1');
 
@@ -134,15 +134,16 @@ function parseMeasures(scorePartwise: Element, instruments: Instrument[], pageDa
 
   instruments.forEach((currInstrument) => {
     const part = findOne(scorePartwise, `part[id=${currInstrument.id}]`)
-    findAll(part, 'measure').forEach((measureElement, index) => {
-      parseMeasure(currInstrument, measureElement, parsedMeasures, index);
+    findAll(part, 'measure').forEach((measureElement) => {
+      parseMeasure(currInstrument, measureElement, parsedMeasures);
     });
   });
 
   return convertToMeasures(parsedMeasures, pageData);
 }
 
-function parseMeasure(instrument: Instrument, measureElement: Element, parsedMeasures: ParsedMeasure[], measureNumber: number) {
+function parseMeasure(instrument: Instrument, measureElement: Element, parsedMeasures: ParsedMeasure[]) {
+  const measureNumber = findAttrInt(measureElement, "number");
   const width = findAttrInt(measureElement, "width");
   const print = findOne(measureElement, "print");
   const attributes = findOne(measureElement, "attributes");
@@ -210,8 +211,8 @@ function convertToMeasures(parsedMeasures: ParsedMeasure[], pageData: PageData):
   let divisions = 0;
   const currPos: Point = { x: 0, y: 0 };
 
-  let lastMeasure: Measure | undefined = undefined;
-  return parsedMeasures.map((parsedMeasure) => {
+  let prevMeasure: Measure | undefined = undefined;
+  return parsedMeasures.map((parsedMeasure, index) => {
     if (parsedMeasure.newPage) {
       pageNumber++;
     }
@@ -220,7 +221,7 @@ function convertToMeasures(parsedMeasures: ParsedMeasure[], pageData: PageData):
       divisions = parsedMeasure.divisions;
     }
 
-    if (parsedMeasure.newPage || parsedMeasure.newSystem || parsedMeasure.number === 0) {
+    if (parsedMeasure.newPage || parsedMeasure.newSystem || index === 0) {
       lastFilledStaveLayouts = parsedMeasure.staveLayouts;
 
       const pageMarginsType = pageNumber % 2 == 0 ? 'even' : 'odd';
@@ -228,10 +229,10 @@ function convertToMeasures(parsedMeasures: ParsedMeasure[], pageData: PageData):
 
       currPos.x = pageMargins.leftMargin + parsedMeasure.systemMarginLeft;
 
-      if (parsedMeasure.newPage || parsedMeasure.number === 0) {
+      if (parsedMeasure.newPage || index === 0) {
         currPos.y = pageMargins.topMargin + parsedMeasure.topSystemDistance + pageNumber * pageData.pageHeight;
       } else {
-        currPos.y += parsedMeasure.systemDistance + lastMeasure!!.dimension.height;
+        currPos.y += parsedMeasure.systemDistance + prevMeasure!!.dimension.height;
       }
     }
 
@@ -251,7 +252,7 @@ function convertToMeasures(parsedMeasures: ParsedMeasure[], pageData: PageData):
 
     currPos.x += parsedMeasure.width;
 
-    lastMeasure = measure;
+    prevMeasure = measure;
     return measure;
   })
 }
@@ -264,7 +265,7 @@ function parseGroups(scorePartwise: Element, instruments: Instrument[], measures
     const context = { groupId: 0, prevTime: 0, currTime: 0, instruments, instrument: currInstrument, tempo: 0 } as MeasureParsingContext;
 
     measures.forEach((measure) => {
-      const measureElement = findOne(part, `measure[number="${measure.number + 1}"]`);
+      const measureElement = findOne(part, `measure[number="${measure.number}"]`);
       context.key = getMeasureKey(measureElement) ?? context.key;
       context.measure = measure;
 

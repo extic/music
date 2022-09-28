@@ -51,18 +51,18 @@ export function parseSong(song: Song): SongData {
 }
 
 export function printDebug(songData: SongData) {
-  songData.groups.forEach((group) => {
-    console.log(`Group ${group.id}, time=${group.time}, duration=${group.duration}, measure=${group.measure.number}, tempo=${group.tempo}, divisions=${group.measure.divisions}`)
-    group.instruments.forEach((instrumentStaves) => {
-      console.log(`    Instrument ${instrumentStaves.instrument.id}:`);
-      instrumentStaves.staves.forEach((staff) => {
-        console.log(`        Staff ${staff.staffNumber}:`);
-        staff.notes.forEach((note) => {
-          console.log(`            ${note.rest ? 'Rest' : 'Note ' + note.noteNumber}, duration=${note.duration}`)
-        });
-      })
-    })
-  })
+  // songData.groups.forEach((group) => {
+  //   console.log(`Group ${group.id}, time=${group.time}, duration=${group.duration}, measure=${group.measure.number}, tempo=${group.tempo}, divisions=${group.measure.divisions}`)
+  //   group.instruments.forEach((instrumentStaves) => {
+  //     console.log(`    Instrument ${instrumentStaves.instrument.id}:`);
+  //     instrumentStaves.staves.forEach((staff) => {
+  //       console.log(`        Staff ${staff.staffNumber}:`);
+  //       staff.notes.forEach((note) => {
+  //         console.log(`            ${note.rest ? 'Rest' : 'Note ' + note.noteNumber}, duration=${note.duration}`)
+  //       });
+  //     })
+  //   })
+  // })
 }
 
 function readSong(song: Song): Document {
@@ -275,6 +275,7 @@ function parseGroups(scorePartwise: Element, instruments: Instrument[], measures
   calcGroupTiming(groups);
   calcGroupPositioning(groups);
   calcGroupTempos(groups);
+  resetGroupIndexes(groups);
 
   return groups;
 }
@@ -456,5 +457,11 @@ function calcGroupTempos(groups: NoteGroup[]) {
     } else {
       group.tempo = lastTempo;
     }
+  });
+}
+
+function resetGroupIndexes(groups: NoteGroup[]) {
+  groups.forEach((group, index) => {
+    group.id = index;
   });
 }

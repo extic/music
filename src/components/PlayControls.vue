@@ -4,7 +4,7 @@
       <div class="group-label">Who is playing?</div>
       <PlayerSelection />
     </div>
-    <div v-if="player === 'computer'" class="group-container">
+    <div class="group-container">
       <div class="group">
         <div class="group-label">Play Controls</div>
         <div class="play-buttons">
@@ -23,7 +23,7 @@
         </div>
       </div>
     </div>
-    <div v-else class="group-container">
+    <div v-if="player === 'human'" class="group-container">
       <div class="group">
         <div class="group-label">Choose Instrument</div>
         <select v-model="selectedInstrument">

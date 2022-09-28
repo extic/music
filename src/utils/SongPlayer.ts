@@ -1,8 +1,10 @@
 import _ from "lodash";
+import { it } from "node:test";
 import { midiService } from "../services/midi-service";
 import { usePlayerStore } from "../store/player-store";
+import { NoteGroup } from "./parser/song.data";
 
-function initInstruments() {
+function initInstruments() {``
   const player = usePlayerStore();
   // player.instruments.forEach((it) => {
   //   midiService.initInstruments(it);
@@ -17,13 +19,37 @@ function triggerKeys() {
   }
 
   const practiceStaves = getPracticeStaves();
+  const group = player.groups[player.position];
 
-  if (player.player === "computer") {
-    triggerComputerKeys(false, practiceStaves);
+  const instrumentStaves = group.instruments.find((it) => it.instrument === player.selectedInstrument)
+  let requiredKeys: number[] = [];
+  if (instrumentStaves) {
+    requiredKeys = instrumentStaves.staves
+      .filter((it) => practiceStaves.includes(it.staffNumber))
+      .flatMap((staff) => staff.notes)
+      .filter((note) => !note.rest && !note.tieStop)
+      .map((note) => note.noteNumber)
+  }
+  console.log("requiredKeys", requiredKeys);
+
+  const pressedKeys = player.pressedKeys;
+  console.log("pressedKeys", pressedKeys)
+  if (requiredKeys.length > 0 && requiredKeys.length !== pressedKeys.length || !_.isEmpty(_.difference(requiredKeys, pressedKeys))) {
     return;
   }
+  player.clearPressedKeys();
 
-  const group = player.groups[player.position];
+  const playerHasKeys = requiredKeys.length > 0;
+  const computerHasKeys = triggerComputerKeys(false, practiceStaves);
+  console.log(playerHasKeys, computerHasKeys);
+
+  awaitNextGroup(group, playerHasKeys, computerHasKeys);
+
+  // if (player.player === "computer") {
+  //   return;
+  // }
+
+
   // const requiredKeys = practiceStaves
   //   .flatMap((staff) => group.notes[staff])
   //   .filter((it) => !it.isRest)
@@ -36,26 +62,37 @@ function triggerKeys() {
   //   return;
   // }
 
-  player.clearPressedKeys();
+  // player.clearPressedKeys();
 
   // const playerHasKeys = requiredKeys.length > 0;
   // triggerComputerKeys(playerHasKeys, practiceStaves);
 }
 
-function triggerComputerKeys(playerHasKeys: boolean, practiceStaves: number[]) {
+function triggerComputerKeys(playerHasKeys: boolean, practiceStaves: number[]): boolean {
   const player = usePlayerStore();
   const group = player.groups[player.position];
+  let computerHasKeys = false;
 
   group.instruments.forEach((instrumentStaves) => {
-    instrumentStaves.staves.forEach((staff) => {
-      staff.notes
-        .filter((note) => !note.rest && !note.tieStop)
-        .forEach((note) => {
-          midiService.play(note.noteNumber, 0x40, instrumentStaves.instrument); //, AvailableMidiInstruments[0], 0);
-        })
-    })
-  })
+    const instrument = instrumentStaves.instrument;
 
+    instrumentStaves.staves.forEach((staff) => {
+      if (instrument !== player.selectedInstrument || !practiceStaves.includes(staff.staffNumber)) {
+        staff.notes
+          .filter((note) => !note.rest && !note.tieStop)
+          .forEach((note) => {
+            computerHasKeys = true;
+            midiService.play(note.noteNumber, 0x40, instrumentStaves.instrument); //, AvailableMidiInstruments[0], 0);
+          });
+      }
+    });
+  });
+
+  return computerHasKeys;
+}
+
+function awaitNextGroup(group: NoteGroup, playerHasKeys: boolean, computerHasKeys: boolean) {
+  const player = usePlayerStore();
   // Object.values(group.instruments).forEach((instrumentNotes) => {
   //   const instrument = instrumentNotes.instrument;
 
@@ -80,7 +117,9 @@ function triggerComputerKeys(playerHasKeys: boolean, practiceStaves: number[]) {
     const divisions = group.measure.divisions;
 
     if (player.playing) {
+      // const timeoutDelay = playerHasKeys && !computerHasKeys ? 0 : 1 / group.tempo * 60000 * group.duration / divisions * player.playSpeed;
       const timeoutDelay = 1 / group.tempo * 60000 * group.duration / divisions * player.playSpeed;
+      console.log("timeoutDelay", timeoutDelay)
       setTimeout(() => {
         advancePosition();
       }, timeoutDelay);
@@ -152,15 +191,16 @@ function getPracticeStaves(): number[] {
   if (player.player === "computer") {
     return [];
   }
-  // const staffIndexes = player.selectedInstrument!!.staffIndexes;
-  // if (staffIndexes.length === 1 || (player.practiceLeftHand && player.practiceRightHand)) {
-  //   return staffIndexes;
-  // }
-  // if (player.practiceLeftHand) {
-  //   return [staffIndexes[1]];
-  // }
-  // return [staffIndexes[0]];
-  return [];
+  const staffCount = player.selectedInstrument!!.staffCount;
+  if (staffCount === 1 || (player.practiceLeftHand && player.practiceRightHand)) {
+    return [...Array(staffCount).keys()];
+  }
+
+  if (player.practiceLeftHand) {
+    return [1];
+  }
+
+  return [0];
 }
 
 export const SongPlayer = {

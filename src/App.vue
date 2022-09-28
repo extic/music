@@ -6,7 +6,9 @@
 import { defineComponent } from 'vue';
 import { MidiCallback, midiService } from './services/midi-service';
 import { useMidiStore } from './store/midi-store';
+import { usePlayerStore } from './store/player-store';
 import { useSongStore } from './store/song-store';
+import { SongPlayer } from './utils/SongPlayer';
 
 export default defineComponent({
   name: "App",
@@ -15,7 +17,7 @@ export default defineComponent({
     // const settings = useSettingsStore();
     const midi = useMidiStore();
     const songs = useSongStore();
-    // const player = usePlayerStore();
+    const player = usePlayerStore();
 
     class MidiCallBackImpl implements MidiCallback {
       setConnected(connected: boolean): void {
@@ -26,12 +28,12 @@ export default defineComponent({
         // // midi.setUserVelocity(velocity);
         // // midi.keyOn(key, velocity);
 
-        // player.setPressedKey(key);
-        // SongPlayer.triggerKeys();
+        player.setPressedKey(key);
+        SongPlayer.triggerKeys();
       }
 
       keyOff(key: number) {
-        // player.removePressedKey(key);
+        player.removePressedKey(key);
         // // midi.keyOff(key);
         // SongPlayer.triggerKeys();
       }

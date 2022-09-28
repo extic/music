@@ -34,20 +34,19 @@ export default defineComponent({
         () => songs.editSongPaneShown,
         (newValue, _) => {
           if (newValue) {
-            songName.value = songs.selectedSong!!.name;
-            songAuthor.value = songs.selectedSong!!.author;
+            songName.value = songs.editedSong!!.name;
+            songAuthor.value = songs.editedSong!!.author;
           }
         }
       );
 
     const close = () => {
       if (!isEmpty(songName.value.trim()) && !isEmpty(songAuthor.value.trim())) {
-        songs.selectedSong!!.name = songName.value;
-        songs.selectedSong!!.author = songAuthor.value;
-        saveSongJson(songs.selectedSong!!);
-        // songs.loadSongs();
+        songs.editedSong!!.name = songName.value;
+        songs.editedSong!!.author = songAuthor.value;
+        saveSongJson(songs.editedSong!!);
       }
-      songs.setEditSongPaneShown(false);
+      songs.setEditSongPaneShown(false, null);
     };
 
     return {

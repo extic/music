@@ -1,5 +1,4 @@
 import { ipcRenderer } from "electron";
-import { fstat } from "fs";
 import { defineStore } from "pinia";
 import { storage } from "../utils/local_storage";
 import fs from "fs";
@@ -13,6 +12,7 @@ export const useSettingsStore = defineStore("settings", {
   state: () => ({
     _shown: false,
     _dataFilesPath: initialDataFilesPath,
+    _editMode: false,
   }),
 
   getters: {
@@ -22,6 +22,10 @@ export const useSettingsStore = defineStore("settings", {
 
     dataFilesPath(state): string {
       return state._dataFilesPath;
+    },
+
+    editMode(state): boolean {
+      return state._editMode;
     },
   },
 
@@ -33,6 +37,10 @@ export const useSettingsStore = defineStore("settings", {
     setDataFilesPath(path: string) {
       this._dataFilesPath = path;
       localStorage.setItem("data-files-path", path);
+    },
+
+    setEditMode(editMode: boolean) {
+      this._editMode = editMode;
     },
   },
 });

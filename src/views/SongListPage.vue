@@ -14,10 +14,13 @@
         <input id="filter" v-model="filter" />
         <button title="Clear filter" @click="filter = ''"></button>
       </div>
+      <button v-if="editMode" class="filter-button" @click="importSong">
+        <span>Import</span>
+      </button>
     </div>
     <section class="song-list-container">
       <transition-group class="song-list" name="list" tag="div">
-        <song-box :song="song" v-for="song in filteredSongList" :key="song.name" @click="selectSong(song)" />
+        <song-box :song="song" v-for="song in filteredSongList" :key="song.name" />
       </transition-group>
       <div v-if="filteredSongList.length === 0" class="no-match">No song matches your filter</div>
     </section>
@@ -42,6 +45,10 @@ export default defineComponent({
     const router = useRouter();
     const songs = useSongStore();
     const settings = useSettingsStore();
+
+    const editMode = computed(() => {
+      return settings.editMode;
+    })
 
     const filter = computed({
       get(): string {
@@ -74,11 +81,11 @@ export default defineComponent({
         .sort((s1: Song, s2: Song) => s1.name.localeCompare(s2.name));
     });
 
-    const selectSong = (song: Song) => {
-      router.push({ name: "Song", params: { songId: song.id } });
-    };
+    const importSong = () => {
+      songs.setImportSongPaneShown(true);
+    }
 
-    return { showAllSongs, filter, selectSong, filteredSongList, songs };
+    return { editMode, showAllSongs, filter, filteredSongList, songs, importSong };
   },
 });
 </script>

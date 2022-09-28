@@ -9,6 +9,7 @@ export const useSongStore = defineStore("song", {
     _filter: "",
     _showFavorites: false,
     _editSongPaneShown: false,
+    _editedSong: null as Song | null,
     _importSongPaneShown: false,
   }),
 
@@ -31,6 +32,10 @@ export const useSongStore = defineStore("song", {
 
     editSongPaneShown(state): boolean {
       return state._editSongPaneShown;
+    },
+
+    editedSong(state): Song | null {
+      return state._editedSong;
     },
 
     importSongPaneShown(state): boolean {
@@ -71,7 +76,8 @@ export const useSongStore = defineStore("song", {
       this._showFavorites = showFavorites;
     },
 
-    setEditSongPaneShown(editSongPaneShown: boolean): void {
+    setEditSongPaneShown(editSongPaneShown: boolean, song: Song | null): void {
+      this._editedSong = song;
       this._editSongPaneShown = editSongPaneShown;
     },
 

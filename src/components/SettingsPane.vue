@@ -5,6 +5,11 @@
       <button class="close" title="Close settings" @click="close">🠆</button>
     </div>
 
+    <div class="field one-liner">
+      <label for="edit-mode">Toggle song edit mode</label>
+      <button id="edit-mode" @click="toggleEditMode">{{ editMode ? "Exit" : "Enter" }} Edit Mode</button>
+    </div>
+
     <div class="field">
       <label for="data-files-path">Data Files Path</label>
       <div class="one-liner">
@@ -49,7 +54,10 @@
 
 <script lang="ts">
 import { ipcRenderer } from "electron";
+import { useLayoutStore } from "../store/layout-store";
+import { SongPlayer } from "../utils/SongPlayer";
 import { defineComponent, ref, watch, computed } from "vue";
+import { useRouter } from "vue-router";
 import { AvailableMidiInstruments, MidiDeviceDescriptor, MidiInstrument, midiService } from "../services/midi-service";
 import { useSettingsStore } from "../store/settings-store";
 import { useSongStore } from "../store/song-store";
@@ -60,11 +68,23 @@ export default defineComponent({
   setup: function () {
     const settings = useSettingsStore();
     const songs = useSongStore();
+    const layout = useLayoutStore();
+    const router = useRouter();
 
+    const editMode = computed(() => settings.editMode);
     const dataFilesPath = computed(() => settings.dataFilesPath);
     // const midiInputDevice = ref(midiService.selectedInputDescriptor());
     // const midiOutputDevice = ref(midiService.selectedOutputDescriptor());
     const midiInstrument = ref(midiService.chosenInstrument());
+
+    const toggleEditMode = () => {
+      settings.setEditMode(!settings.editMode);
+      settings.setShown(false);
+      songs.setSelectedSong(null);
+      layout.setKeyboardButtonShown(false);
+      SongPlayer.reset();
+      router.push({ name: "SongList" });
+    };
 
     const midiInputDevice = computed({
       get(): MidiDeviceDescriptor | null {
@@ -116,6 +136,8 @@ export default defineComponent({
 
     return {
       settings,
+      editMode,
+      toggleEditMode,
       dataFilesPath,
       availableMidiInputs,
       availableMidiOutputs,
@@ -187,14 +209,9 @@ export default defineComponent({
     flex-direction: column;
     margin-bottom: 2em;
 
-    .one-liner {
-      display: flex;
-      flex-direction: row;
-      gap: 1em;
-    }
-
     label {
       margin-bottom: 0.5em;
+      line-height: 1.4em;
     }
 
     input,
@@ -214,6 +231,25 @@ export default defineComponent({
       border-radius: 4px;
       cursor: pointer;
     }
+
+    button {
+      @include pressable;
+      flex-shrink: 0;
+      padding: 0.3em 2em;
+      border: 1px solid #e3e3e3;
+      border-radius: 4px;
+      cursor: pointer;
+    }
   }
+
+  .one-liner {
+      display: flex;
+      flex-direction: row;
+      gap: 1em;
+
+      label {
+        margin-bottom: 0;
+      }
+    }
 }
 </style>

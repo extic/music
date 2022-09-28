@@ -2,15 +2,16 @@
   <div class="header-bar">
     <div v-if="song" class="back-button" @click="backPressed">Back</div>
     <div class="main-header">
-      <div v-if="!song" class="page-title">Song List</div>
+      <div v-if="!song" class="page-title">
+        <span>Song List</span>
+        <span v-if="editMode"> (Edit Mode)</span>
+      </div>
       <div v-else class="selected-song">
         <div class="page-title">{{ song.name }}</div>
         <div v-if="song.author" class="song-author">{{ song.author }}</div>
       </div>
     </div>
     <div class="controls">
-      <button v-if="song" class="control-button" @click="showEditSongPane">Edit</button>
-      <button v-else class="control-button always" @click="showImportSongPane">Import</button>
       <div class="midi">
         <img v-if="isMidiConnected" alt="midi on" src="../assets/images/midi-connected.svg" title="MIDI device connected successfully" />
         <img v-else alt="midi off" class="disconnected" src="../assets/images/midi-disconnected.svg" title="MIDI device is not connected" />
@@ -51,7 +52,6 @@ import { useLayoutStore } from "../store/layout-store";
 import { useMidiStore } from "../store/midi-store";
 import { useSettingsStore } from "../store/settings-store";
 import { useSongStore } from "../store/song-store";
-// import { SongPlayer } from "../utils/SongPlayer";
 
 export default defineComponent({
   name: "HeaderBar",
@@ -66,6 +66,7 @@ export default defineComponent({
     const isInFullscreen = ref(false);
 
     const song = computed(() => songs.selectedSong);
+    const editMode = computed(() => settings.editMode);
     const isShowKeyboardButton = computed(() => layout.keyboardButtonShown);
     const isShowKeyboard = computed(() => layout.keyboardShown);
     const isMidiConnected = computed(() => midi.connected);
@@ -96,15 +97,8 @@ export default defineComponent({
       settings.setShown(!settings.shown);
     };
 
-    const showEditSongPane = (e: Event) => {
-      songs.setEditSongPaneShown(true);
-    };
-
-    const showImportSongPane = (e: Event) => {
-      songs.setImportSongPaneShown(true);
-    };
-
     return {
+      editMode,
       isInFullscreen,
       song,
       isShowKeyboardButton,
@@ -114,8 +108,6 @@ export default defineComponent({
       toggleFullScreen,
       setKeyboardShown,
       showSettings,
-      showEditSongPane,
-      showImportSongPane,
     };
   },
 });
@@ -133,10 +125,6 @@ export default defineComponent({
   padding: 0 1em;
   box-sizing: border-box;
   border-bottom: 1px solid gray;
-
-  &:hover > .controls > .control-button {
-    opacity: 1;
-  }
 
   .back-button {
     margin-right: 3em;
@@ -177,28 +165,6 @@ export default defineComponent({
     display: flex;
     align-items: center;
     gap: 1em;
-
-    .control-button {
-      opacity: 0;
-      transition: opacity 0.2s, background-color 0.2s, border 0.2s, color 0.2s;
-      cursor: pointer;
-      background-color: #00000033;
-      border: 1px solid #00000055;
-      border-radius: 4px;
-      padding: 0.2em 1em;
-      color: #dfdfdf;
-      margin-right: 1em;
-
-      &.always {
-        opacity: 1;
-      }
-
-      &:hover {
-        background-color: #00000022;
-        border: 1px solid #00000033;
-        color: #ffffff;
-      }
-    }
 
     .button {
       width: 1.5em;

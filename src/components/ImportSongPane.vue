@@ -4,21 +4,31 @@
       <h1>Import Song</h1>
       <button class="close" title="Close" @click="close">🠆</button>
     </div>
-    <div class="field">
-      <label for="fileName">File to import</label>
-      <div class="one-liner">
-        <input
-          id="data-files-path"
-          v-model="fileName"
-          placeholder="MuseScore files *.mscz or *.musicxml"
-          readonly
-          @click="selectFile"
-        />
-        <button class="folder-button" @click="selectFile"></button>
+    <div v-if="importProgress === 100">
+      <div class="field">
+        <label for="fileName">File to import</label>
+        <div class="one-liner">
+          <input
+            id="data-files-path"
+            v-model="fileName"
+            placeholder="MuseScore files *.mscz or *.musicxml"
+            readonly
+            @click="selectFile"
+          />
+          <button class="folder-button" @click="selectFile"></button>
+        </div>
+      </div>
+      <div class="field">
+        <button class="import-button" @click="importFile">Import</button>
       </div>
     </div>
-    <div class="field">
-      <button class="import-button" @click="importFile">Import</button>
+    <div v-else>
+      <label>Import status:</label>
+      {{ importStatus }}
+      <div class="progress-bar">
+        <div class="progress-bar-line" :style="{right: (100 - importProgress) + '%'}"></div>
+        <div class="progress-bar-value">{{ importProgress}}%</div>
+      </div>
     </div>
     <!-- <div class="field">
       <label for="songAuthor">Composer / Arranger</label>
@@ -28,10 +38,11 @@
 </template>
 
 <script lang="ts">
-  import { ipcRenderer } from "electron";
+import { ipcRenderer } from "electron";
 import { defineComponent, ref } from "vue";
 import { useSongStore } from "../store/song-store";
 import { useSettingsStore } from "../store/settings-store";
+import { isEmpty } from "lodash";
 
 export default defineComponent({
   name: "EditSongPane",
@@ -40,18 +51,32 @@ export default defineComponent({
     const songs = useSongStore();
     const settings = useSettingsStore();
 
+    const importStatus = ref("");
+    const importProgress = ref(100);
     const fileName = ref("");
+
+    ipcRenderer.on("import-progress", (event, msg: { progress: number, status: string }) => {
+      importStatus.value = msg.status;
+      importProgress.value = msg.progress;
+
+      if (msg.progress === 100) {
+        songs.loadSongs();
+        songs.setImportSongPaneShown(false);
+      }
+    });
 
     const selectFile = () => {
       const file = ipcRenderer.sendSync("choose-file-dialog", fileName.value);
       if (file) {
         fileName.value = file;
+        importFile();
       }
     };
 
     const importFile = () => {
-      ipcRenderer.sendSync("import-file", fileName.value, settings.dataFilesPath);
-      songs.loadSongs();
+      if (!isEmpty(fileName.value.trim())) {
+        ipcRenderer.send("import-file", fileName.value, settings.dataFilesPath);
+      }
     }
 
     const close = () => {
@@ -64,6 +89,8 @@ export default defineComponent({
       selectFile,
       importFile,
       close,
+      importStatus,
+      importProgress,
     };
   },
 });
@@ -166,6 +193,28 @@ export default defineComponent({
         background-color: #80c4dd;
         color: white;
       }
+    }
+  }
+
+  .progress-bar {
+    border: 1px solid lightgray;
+    border-radius: 5px;
+    padding: 0.2em;
+    position: relative;
+    overflow: hidden;
+    height: 1.8em;
+
+    .progress-bar-line {
+      position: absolute;
+      top: 0;
+      left: 0;
+      bottom: 0;
+      background-color: #80c4dd;
+    }
+
+    .progress-bar-value {
+      position: absolute;
+      left: calc(50% - 3em);
     }
   }
 }

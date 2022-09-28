@@ -36,7 +36,7 @@ export const eventRegistrar = {
     });
 
     ipcMain.on("import-file", async (event, fileName, dataFilesFolder) => {
-      importFile(fileName, dataFilesFolder);
+      importFile(win, fileName, dataFilesFolder);
       event.returnValue = null;
     });
   },

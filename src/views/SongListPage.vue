@@ -14,9 +14,8 @@
         <input id="filter" v-model="filter" />
         <button title="Clear filter" @click="filter = ''"></button>
       </div>
-      <button v-if="editMode" class="filter-button" @click="importSong">
-        <span>Import</span>
-      </button>
+      <button v-if="editMode" class="filter-button" @click="importSong">Import</button>
+      <button v-if="editMode" class="filter-button" @click="exitEditMode">Exit Edit Mode</button>
     </div>
     <section class="song-list-container">
       <transition-group class="song-list" name="list" tag="div">
@@ -85,7 +84,11 @@ export default defineComponent({
       songs.setImportSongPaneShown(true);
     }
 
-    return { editMode, showAllSongs, filter, filteredSongList, songs, importSong };
+    const exitEditMode = () => {
+      settings.setEditMode(false);
+    }
+
+    return { editMode, showAllSongs, filter, filteredSongList, songs, importSong, exitEditMode };
   },
 });
 </script>
@@ -120,6 +123,7 @@ export default defineComponent({
       cursor: pointer;
       transition: background-color 0.2s;
       font-size: 1.2em;
+      white-space: nowrap;
 
       &.selected {
         background-color: #69ccef;

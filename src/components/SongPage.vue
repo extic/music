@@ -19,7 +19,7 @@
           class="group"
           :style="{ left: `${group.posX}px`, width: `${group.width}px`, top: `${group.posY}px`, height: `${group.height}px` }"
           @click="groupClicked(group)"
-          @click.right.stop.prevent="openNoteGroupContextMenu($event, group.id)"
+          @click.right.stop.prevent="openNoteGroupContextMenu($event, group.id as number)"
           >
           <div class="hover-trap" :class="{'start-block': group.id === startBlock, 'end-block': group.id === endBlock}"></div>
         </div>
@@ -53,7 +53,7 @@ import ContextMenuItem from "./menu/ContextMenuItem.vue"
 import ContextMenu from "./menu/ContextMenu.vue"
 
 type ElementPosition = {
-  id: number;
+  id: number | string;
   posX: number;
   posY: number;
   width: number;
@@ -149,7 +149,7 @@ export default defineComponent({
     };
 
     const groupClicked = (group: ElementPosition) => {
-      player.setPosition(group.id);
+      player.setPosition(group.id as number);
     };
 
     const setLoopStartText = () => {

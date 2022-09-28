@@ -73,7 +73,7 @@ export type Note = {
 }
 
 export type Measure = {
-  number: number;
+  number: string;
   pos: Point;
   dimension: Dimension;
   pageNumber: number;

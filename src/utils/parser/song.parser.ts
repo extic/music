@@ -6,7 +6,7 @@ import { forEach, last, max, min, minBy, range, zip } from "lodash";
 import { Song } from "../../services/song-serializer.service";
 
 type ParsedMeasure = {
-  number: number;
+  number: string;
   width: number;
   newPage: boolean;
   newSystem: boolean;
@@ -143,7 +143,7 @@ function parseMeasures(scorePartwise: Element, instruments: Instrument[], pageDa
 }
 
 function parseMeasure(instrument: Instrument, measureElement: Element, parsedMeasures: ParsedMeasure[]) {
-  const measureNumber = findAttrInt(measureElement, "number");
+  const measureNumber = findAttr(measureElement, "number");
   const width = findAttrInt(measureElement, "width");
   const print = findOne(measureElement, "print");
   const attributes = findOne(measureElement, "attributes");

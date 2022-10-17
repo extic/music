@@ -131,11 +131,11 @@ export const midiService = {
   //   }
   // },
 
-  // release: (noteNumber: number, instrument: Instrument) => {
-  //   if (selectedOutput) {
-  //     selectedOutput.send([128 | instrument.midiChannel, noteNumber, 0]);
-  //   }
-  // },
+  release: (noteNumber: number, instrument: Instrument) => {
+    if (selectedOutput) {
+      selectedOutput.send([128 | instrument.index, noteNumber, 0]);
+    }
+  },
 
   // play: (noteNumber: number, velocity: number) => {
   //   if (selectedOutput) {

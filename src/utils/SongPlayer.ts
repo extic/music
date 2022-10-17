@@ -31,7 +31,9 @@ function triggerKeys() {
   player.clearPressedKeys();
 
   const playerHasKeys = !isEmpty(requiredKeys.length);
+  triggerOffNotes(practiceStaves);
   const computerHasKeys = triggerComputerKeys(false, practiceStaves);
+
 
   awaitNextGroup(group, playerHasKeys, computerHasKeys);
 
@@ -56,6 +58,24 @@ function triggerKeys() {
 
   // const playerHasKeys = requiredKeys.length > 0;
   // triggerComputerKeys(playerHasKeys, practiceStaves);
+}
+
+function triggerOffNotes(practiceStaves: number[]) {
+  const player = usePlayerStore();
+  const group = player.groups[player.position];
+
+  group.instruments.forEach((instrumentStaves) => {
+    const instrument = instrumentStaves.instrument;
+
+    instrumentStaves.staves.forEach((staff) => {
+      if (instrument !== player.selectedInstrument || !practiceStaves.includes(staff.staffNumber)) {
+        staff.notesOff
+          .forEach((noteNumber) => {
+            midiService.release(noteNumber, instrumentStaves.instrument); //, AvailableMidiInstruments[0], 0);
+          });
+      }
+    });
+  });
 }
 
 function triggerComputerKeys(playerHasKeys: boolean, practiceStaves: number[]): boolean {

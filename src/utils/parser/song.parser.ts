@@ -51,18 +51,23 @@ export function parseSong(song: Song): SongData {
 }
 
 export function printDebug(songData: SongData) {
-  // songData.groups.forEach((group) => {
-  //   console.log(`Group ${group.id}, time=${group.time}, duration=${group.duration}, measure=${group.measure.number}, tempo=${group.tempo}, divisions=${group.measure.divisions}`)
-  //   group.instruments.forEach((instrumentStaves) => {
-  //     console.log(`    Instrument ${instrumentStaves.instrument.id}:`);
-  //     instrumentStaves.staves.forEach((staff) => {
-  //       console.log(`        Staff ${staff.staffNumber}:`);
-  //       staff.notes.forEach((note) => {
-  //         console.log(`            ${note.rest ? 'Rest' : 'Note ' + note.noteNumber}, duration=${note.duration}`)
-  //       });
-  //     })
-  //   })
-  // })
+  songData.groups.forEach((group) => {
+    console.log(`Group ${group.id}, time=${group.time}, duration=${group.duration}, measure=${group.measure.number}, tempo=${group.tempo}, divisions=${group.measure.divisions}`)
+    group.instruments.forEach((instrumentStaves) => {
+      console.log(`    Instrument ${instrumentStaves.instrument.id}:`);
+      instrumentStaves.staves.forEach((staff) => {
+        console.log(`        Staff ${staff.staffNumber}:`);
+        console.log(`            On-Notes:`);
+        staff.notes.filter((note) => !note.tieStop).forEach((note) => {
+          console.log(`                ${note.rest ? 'Rest' : 'Note ' + note.noteNumber}, duration=${note.duration}`)
+        });
+        console.log(`            Off-Notes:`);
+        staff.notesOff.forEach((noteNumber) => {
+          console.log(`                Note ${noteNumber}`)
+        });
+      })
+    })
+  })
 }
 
 function readSong(song: Song): Document {
@@ -277,6 +282,7 @@ function parseGroups(scorePartwise: Element, instruments: Instrument[], measures
   calcGroupPositioning(groups);
   calcGroupTempos(groups);
   resetGroupIndexes(groups);
+  updateNotesOff(groups);
 
   return groups;
 }
@@ -384,6 +390,7 @@ function createNewGroup(context: MeasureParsingContext): NoteGroup {
     for (let staffNumber = 0; staffNumber < instrument.staffCount; staffNumber++) {
       instrumentStaves.staves.push({
         notes: [],
+        notesOff: [],
         staffNumber,
       });
     }
@@ -464,5 +471,48 @@ function calcGroupTempos(groups: NoteGroup[]) {
 function resetGroupIndexes(groups: NoteGroup[]) {
   groups.forEach((group, index) => {
     group.id = index;
+  });
+}
+
+function updateNotesOff(groups: NoteGroup[]) {
+  groups.forEach((group, groupIndex) => {
+    group.instruments.forEach((instrument, instrumentIndex) => {
+      instrument.staves.forEach((staff, staffIndex) => {
+        staff.notes.filter((note) => note.tieStop).forEach((tieStopNote) => {
+          let currDuration = tieStopNote.duration;
+          let i = groupIndex - 1;
+          let done = false;
+          while (!done && i >= 0) {
+            const otherStaff = groups[i].instruments[instrumentIndex].staves[staffIndex];
+            const otherNote = otherStaff.notes.find((otherNote) => otherNote.noteNumber === tieStopNote.noteNumber);
+            if (otherNote) {
+              currDuration += otherNote.duration;
+              otherNote.duration = currDuration;
+
+              if (!otherNote.tieStop) {
+                done = true;
+              }
+            }
+            i--;
+          }
+        })
+      })
+    })
+  });
+
+  // generate note-offs
+  groups.forEach((group, groupIndex) => {
+    group.instruments.forEach((instrument, instrumentIndex) => {
+      instrument.staves.forEach((staff, staffIndex) => {
+        staff.notes
+          .filter((note) => !note.tieStop)
+          .forEach((note) => {
+            const otherGroup = groups.find((offGroup) => offGroup.time === group.time + note.duration);
+            if (otherGroup) {
+              otherGroup.instruments[instrumentIndex].staves[staffIndex].notesOff.push(note.noteNumber);
+            }
+          });
+      });
+    });
   });
 }

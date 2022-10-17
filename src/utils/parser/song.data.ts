@@ -51,6 +51,7 @@ export type InstrumentStaves = {
 export type Staff = {
   staffNumber: number;
   notes: Note[];
+  notesOff: number[];
 }
 
 export type Point = {

@@ -29,6 +29,9 @@ export default defineComponent({
         // // midi.keyOn(key, velocity);
 
         player.setPressedKey(key);
+        if (player.playingTimeoutId) {
+          clearTimeout(player.playingTimeoutId);
+        }
         SongPlayer.triggerKeys();
       }
 

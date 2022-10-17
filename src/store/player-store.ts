@@ -27,6 +27,8 @@ export const usePlayerStore = defineStore("player", {
     _startBlock: undefined as number | undefined,
     _endBlock: undefined as number | undefined,
     _playSpeed: 1,
+    _playingTimeoutId: null as NodeJS.Timeout | null,
+    _requiredKeys: {} as { [key: string]: boolean }
     // _virtualOnKeys: {} as VirtualOnKeys,
   }),
 
@@ -93,6 +95,14 @@ export const usePlayerStore = defineStore("player", {
 
     playSpeed(state): number {
       return state._playSpeed;
+    },
+
+    playingTimeoutId(state): NodeJS.Timeout | null {
+      return state._playingTimeoutId;
+    },
+
+    requiredKeys(state): { [key: string]: boolean } {
+      return state._requiredKeys;
     },
 
     // virtualOnKeys(state): VirtualOnKeys {
@@ -173,6 +183,16 @@ export const usePlayerStore = defineStore("player", {
 
     setPlaySpeed(playSpeed: number) {
       this._playSpeed = playSpeed;
+    },
+
+    setPlayingTimeoutId(playingTimeoutId: NodeJS.Timeout | null) {
+      this._playingTimeoutId = playingTimeoutId;
+    },
+
+    setRequiredKeys(requiredKeys: number[]) {
+      const keys = {} as { [key: string]: boolean };
+      requiredKeys.forEach((it) => keys[it] = true);
+      this._requiredKeys = keys;
     },
 
     // resetVirtualOnKeys(staffs: number[]): void {

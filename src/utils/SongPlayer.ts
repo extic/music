@@ -1,4 +1,4 @@
-import _ from "lodash";
+import _, { isEmpty } from "lodash";
 import { it } from "node:test";
 import { midiService } from "../services/midi-service";
 import { usePlayerStore } from "../store/player-store";
@@ -21,27 +21,17 @@ function triggerKeys() {
   const practiceStaves = getPracticeStaves();
   const group = player.groups[player.position];
 
-  const instrumentStaves = group.instruments.find((it) => it.instrument === player.selectedInstrument)
-  let requiredKeys: number[] = [];
-  if (instrumentStaves) {
-    requiredKeys = instrumentStaves.staves
-      .filter((it) => practiceStaves.includes(it.staffNumber))
-      .flatMap((staff) => staff.notes)
-      .filter((note) => !note.rest && !note.tieStop)
-      .map((note) => note.noteNumber)
-  }
-  console.log("requiredKeys", requiredKeys);
-
   const pressedKeys = player.pressedKeys;
-  console.log("pressedKeys", pressedKeys)
-  if (requiredKeys.length > 0 && requiredKeys.length !== pressedKeys.length || !_.isEmpty(_.difference(requiredKeys, pressedKeys))) {
+  const requiredKeys = calcRequiredKeys(practiceStaves, group);
+  player.setRequiredKeys(requiredKeys);
+
+  if (pressedAndRequiredKeysMismatch(requiredKeys, pressedKeys)) {
     return;
   }
   player.clearPressedKeys();
 
-  const playerHasKeys = requiredKeys.length > 0;
+  const playerHasKeys = !isEmpty(requiredKeys.length);
   const computerHasKeys = triggerComputerKeys(false, practiceStaves);
-  console.log(playerHasKeys, computerHasKeys);
 
   awaitNextGroup(group, playerHasKeys, computerHasKeys);
 
@@ -93,6 +83,10 @@ function triggerComputerKeys(playerHasKeys: boolean, practiceStaves: number[]): 
 
 function awaitNextGroup(group: NoteGroup, playerHasKeys: boolean, computerHasKeys: boolean) {
   const player = usePlayerStore();
+
+  if (player.player !== "computer") {
+    advancePosition();
+  }
   // Object.values(group.instruments).forEach((instrumentNotes) => {
   //   const instrument = instrumentNotes.instrument;
 
@@ -119,10 +113,14 @@ function awaitNextGroup(group: NoteGroup, playerHasKeys: boolean, computerHasKey
     if (player.playing) {
       // const timeoutDelay = playerHasKeys && !computerHasKeys ? 0 : 1 / group.tempo * 60000 * group.duration / divisions * player.playSpeed;
       const timeoutDelay = 1 / group.tempo * 60000 * group.duration / divisions * player.playSpeed;
-      console.log("timeoutDelay", timeoutDelay)
-      setTimeout(() => {
-        advancePosition();
-      }, timeoutDelay);
+      player.setPlayingTimeoutId(setTimeout(() => {
+        if (player.player === "computer") {
+          advancePosition();
+        }
+
+        player.setPlayingTimeoutId(null);
+        triggerKeys();
+      }, timeoutDelay));
     }
 
   // if (player.playing) {
@@ -136,7 +134,7 @@ function awaitNextGroup(group: NoteGroup, playerHasKeys: boolean, computerHasKey
 
 function advancePosition() {
   const player = usePlayerStore();
-  const group = player.groups[player.position];
+  // const group = player.groups[player.position];
   // updateVirtualOnKeysTime(group.length);
   // console.log(player.virtualOnKeys);
 
@@ -146,7 +144,7 @@ function advancePosition() {
   }
   player.setPosition(player.position + 1);
 
-  triggerKeys();
+
 }
 
 function updateVirtualOnKeysTime(amount: number) {
@@ -201,6 +199,28 @@ function getPracticeStaves(): number[] {
   }
 
   return [0];
+}
+
+function calcRequiredKeys(practiceStaves: number[], group: NoteGroup): number[] {
+  const player = usePlayerStore();
+
+  const instrumentStaves = group.instruments.find((it) => it.instrument === player.selectedInstrument)
+  let requiredKeys: number[] = [];
+  if (instrumentStaves) {
+    requiredKeys = instrumentStaves.staves
+      .filter((it) => practiceStaves.includes(it.staffNumber))
+      .flatMap((staff) => staff.notes)
+      .filter((note) => !note.rest && !note.tieStop)
+      .map((note) => note.noteNumber)
+  }
+  // console.log("requiredKeys", requiredKeys);
+  return requiredKeys;
+}
+
+function pressedAndRequiredKeysMismatch(requiredKeys: number[], pressedKeys: number[]): boolean {
+  // console.log(requiredKeys, _.difference(requiredKeys, pressedKeys));
+  // return requiredKeys.length > 0 && requiredKeys.length !== pressedKeys.length || !_.isEmpty(_.difference(requiredKeys, pressedKeys));
+  return requiredKeys.length > 0 && !_.isEmpty(_.difference(requiredKeys, pressedKeys));
 }
 
 export const SongPlayer = {

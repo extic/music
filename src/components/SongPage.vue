@@ -129,8 +129,6 @@ export default defineComponent({
         const groupHeight = group.dimension.height * height / (pageData.pageHeight * pageData.pageCount);
         return {id: group.id, posX, posY, width: groupWidth, height: groupHeight};
       });
-
-      // this.paintCanvas(player(this.$store).position)
     };
 
     let loadedPages = 0;
@@ -193,7 +191,6 @@ export default defineComponent({
 
     const openNoteGroupContextMenu = (event: MouseEvent, index: number) => {
       selectedGroup.value = index;
-      // const contextMenu = this.$refs.noteGroupContextMenu as unknown as typeof ContextMenu
       (noteGroupContextMenu.value as unknown as typeof ContextMenu).show(event)
     };
 
@@ -210,11 +207,7 @@ export default defineComponent({
       playerStore.setMeasures(songData.measures);
       playerStore.setGroups(songData.groups);
       playerStore.setPageData(songData.pageData);
-      //   playerStore.setBpm(songData.bpm);
       //   SongPlayer.initInstruments();
-
-      //   SongParser.printDebug(songData);
-      // };
     });
 
     onUnmounted(() => {

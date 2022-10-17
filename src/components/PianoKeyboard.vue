@@ -97,23 +97,20 @@
 <script lang="ts">
 import { usePlayerStore } from "../store/player-store";
 import { defineComponent, computed } from "vue";
-// import { PressedKeys, usePlayerStore } from "../store/player-store";
 
 export default defineComponent({
   name: "PianoKeyboard",
 
   setup() {
     const player = usePlayerStore();
-    // const keys = computed((): PressedKeys => {
-    //   return player.pressedKeys;
-    // });
+    const keys = computed((): { [key: string]: boolean } => {
+      return player.requiredKeys;
+    });
 
     const keyShouldBePressed = (key: number): boolean => {
-      return true;
-      // return !!keys.value[+key];
+      return !!keys.value[key];
     };
 
-    // return { keys, keyShouldBePressed };
     return { keyShouldBePressed };
   },
 });

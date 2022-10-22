@@ -84,7 +84,7 @@ export default defineComponent({
       settings.setShown(false);
       songs.setSelectedSong(null);
       layout.setKeyboardButtonShown(false);
-      SongPlayer.reset();
+      SongPlayer.stop();
       router.push({ name: "SongList" });
     };
 

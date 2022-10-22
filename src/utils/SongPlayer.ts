@@ -162,9 +162,16 @@ function advancePosition() {
   if (!player.playing) {
     return;
   }
-  player.setPosition(player.position + 1);
 
+  if (player.position === player.endBlock) {
+    player.setPosition(player.startBlock ?? 0);
+  } else {
+    player.setPosition(player.position + 1);
+  }
 
+  if (player.position === player.groups.length) {
+    stop();
+  }
 }
 
 function updateVirtualOnKeysTime(amount: number) {
@@ -190,7 +197,7 @@ function play() {
   triggerKeys();
 }
 
-function stop() {
+function pause() {
   const player = usePlayerStore();
   player.setPlaying(false);
   // player.clearPressedKeys();
@@ -198,10 +205,10 @@ function stop() {
   midiService.resetDevice();
 }
 
-function reset() {
+function stop() {
   const player = usePlayerStore();
-  stop();
-  player.setPosition(0);
+  pause();
+  player.setPosition(player.startBlock ?? 0)
 }
 
 function getPracticeStaves(): number[] {
@@ -245,8 +252,8 @@ function pressedAndRequiredKeysMismatch(requiredKeys: number[], pressedKeys: num
 
 export const SongPlayer = {
   play,
+  pause,
   stop,
-  reset,
   triggerKeys,
   initInstruments,
 };

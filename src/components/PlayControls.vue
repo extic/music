@@ -12,11 +12,11 @@
             <img src="../assets/images/play.svg" />
             <div>Play</div>
           </button>
-          <button @click="stop" :disabled="!playing">
+          <button @click="pause" :disabled="!playing">
             <img src="../assets/images/pause.svg" />
             <div>Pause</div>
           </button>
-          <button @click="reset">
+          <button @click="stop">
             <img src="../assets/images/stop.svg" />
             <div>Stop</div>
           </button>
@@ -186,10 +186,10 @@ export default defineComponent({
     };
 
     const play = SongPlayer.play;
+    const pause = SongPlayer.pause;
     const stop = SongPlayer.stop;
-    const reset = SongPlayer.reset;
 
-    return { playing, player, instruments, selectedInstrument, practiceLeftHand, practiceRightHand, autoAccompany, play, stop, reset, playSpeed, setPlaySpeed };
+    return { playing, player, instruments, selectedInstrument, practiceLeftHand, practiceRightHand, autoAccompany, play, pause, stop, playSpeed, setPlaySpeed };
   },
 
   // methods: {

@@ -6,12 +6,20 @@
       </div>
       <div ref="container" class="score-inner-container">
         <img v-for="(page, index) in pageImages" :key="`page-${index}`" :src="page" width="100%" :onload="pageLoaded"/>
-        <div
+        <!-- <div
           v-for="measure in measurePositions"
           :key="measure.id"
           class="measure"
           :style="{ left: `${measure.posX}px`, width: `${measure.width}px`, top: `${measure.posY}px`, height: `${measure.height}px` }"
           >
+        </div> -->
+        <div
+          v-show="currGroup"
+          ref="marker"
+          class="marker"
+          :style="{ left: `${currGroup.posX}px`, width: `${currGroup.width}px`, top: `${currGroup.posY}px`, height: `${currGroup.height}px` }"
+        >
+          <div class="marker-highlight"></div>
         </div>
         <div
           v-for="group in groupPositions"
@@ -21,15 +29,7 @@
           @click="groupClicked(group)"
           @click.right.stop.prevent="openNoteGroupContextMenu($event, group.id as number)"
           >
-          <div class="hover-trap" :class="{'start-block': group.id === startBlock, 'end-block': group.id === endBlock}"></div>
-        </div>
-        <div
-          v-show="currGroup"
-          ref="marker"
-          class="marker"
-          :style="{ left: `${currGroup.posX}px`, width: `${currGroup.width}px`, top: `${currGroup.posY}px`, height: `${currGroup.height}px` }"
-        >
-          <div class="marker-highlight"></div>
+          <div class="hover-trap" :class="{'start-block': group.id === startBlock, 'end-block': group.id === endBlock, 'selected': group.id === selectedGroup}"></div>
         </div>
       </div>
       <ContextMenu ref="noteGroupContextMenu" @contextMenuClosed="contextMenuClosed()">
@@ -159,30 +159,30 @@ export default defineComponent({
     };
 
     const setLoopStart = () => {
-      if (startBlock.value === -1) {
-        startBlock.value = selectedGroup.value;
+      if (startBlock.value) {
+        startBlock.value = startBlock.value === selectedGroup.value ? undefined : selectedGroup.value;
       } else {
-        startBlock.value = startBlock.value === selectedGroup.value ? -1 : selectedGroup.value;
+        startBlock.value = selectedGroup.value;
       }
-      if (startBlock.value !== -1 && startBlock.value === endBlock.value) {
-        endBlock.value = -1;
+      if (startBlock.value && startBlock.value === endBlock.value) {
+        endBlock.value = undefined;
       }
     };
 
     const setLoopEnd = () => {
-      if (endBlock.value === -1) {
-        endBlock.value = selectedGroup.value;
+      if (endBlock.value) {
+        endBlock.value = endBlock.value === selectedGroup.value ? undefined : selectedGroup.value;
       } else {
-        endBlock.value = endBlock.value === selectedGroup.value ? -1 : selectedGroup.value;
+        endBlock.value = selectedGroup.value;
       }
-      if (endBlock.value !== -1 && startBlock.value === endBlock.value) {
-        startBlock.value = -1;
+      if (endBlock.value && startBlock.value === endBlock.value) {
+        startBlock.value = undefined;
       }
     };
 
     const clearLoop = () => {
-      startBlock.value = -1;
-      endBlock.value = -1;
+      startBlock.value = undefined;
+      endBlock.value = undefined;
     };
 
     const contextMenuClosed = () => {
@@ -311,24 +311,22 @@ export default defineComponent({
       &:hover {
         background-color: #ff000055;
         box-shadow: 0 0 3px 3px #ff000045;
-
-        &.unselected {
-          background-color: transparent;
-        }
       }
 
       &.start-block {
         border-width: 0.3em 0 0.3em 0.6em;
-        border-color: #ff6464;
-        border-radius: 50% 0 0 50%;
-        border-style: double;
+        border-color: #ff6464aa;
+        border-radius: 5em 0 0 5em;
+        border-style: ridge;
+        left: -0.3em
       }
 
       &.end-block {
         border-width: 0.3em 0.6em 0.3em 0;
-        border-color: #ff6464;
-        border-radius: 0 50% 50% 0;
-        border-style: double;
+        border-color: #ff6464aa;
+        border-radius: 0 5em 5em 0;
+        border-style: ridge;
+        right: -0.3em
       }
     }
   }

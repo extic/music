@@ -51,6 +51,10 @@ export function parseSong(song: Song): SongData {
 }
 
 export function printDebug(songData: SongData) {
+  const debug = false;
+  if (!debug) {
+    return
+  }
   songData.groups.forEach((group) => {
     console.log(`Group ${group.id}, time=${group.time}, duration=${group.duration}, measure=${group.measure.number}, tempo=${group.tempo}, divisions=${group.measure.divisions}`)
     group.instruments.forEach((instrumentStaves) => {

@@ -5,49 +5,51 @@
       <button class="close" title="Close settings" @click="close">🠆</button>
     </div>
 
-    <div class="field one-liner">
-      <label for="edit-mode">Toggle song edit mode</label>
-      <button id="edit-mode" @click="toggleEditMode">{{ editMode ? "Exit" : "Enter" }} Edit Mode</button>
-    </div>
-
-    <div class="field">
-      <label for="data-files-path">Data Files Path</label>
-      <div class="one-liner">
-        <input
-          id="data-files-path"
-          v-model="dataFilesPath"
-          placeholder="The folder that contains the musicxml files"
-          readonly
-          @click="selectDataFilesPath"
-        />
-        <button class="folder-button" @click="selectDataFilesPath"></button>
+    <div class="fields-container">
+      <div class="field one-liner">
+        <label for="edit-mode" class="edit-mode edit-mode-title">Toggle song edit mode</label>
+        <button id="edit-mode" class="edit-mode edit-mode-button" @click="toggleEditMode">{{ editMode ? "Exit" : "Enter" }} Edit Mode</button>
       </div>
-    </div>
 
-    <div class="field">
-      <label for="midi-input-device">MIDI Input Device</label>
-      <select id="midi-input-device" v-model="midiInputDevice" :disabled="availableMidiInputs().length === 0">
-        <option v-for="input in availableMidiInputs()" :key="input.id" :value="input">
-          {{ input.name }}
-        </option>
-      </select>
-    </div>
+      <div class="field">
+        <label for="data-files-path">Data Files Path</label>
+        <div class="one-liner">
+          <input
+            id="data-files-path"
+            v-model="dataFilesPath"
+            placeholder="The folder that contains the musicxml files"
+            readonly
+            @click="selectDataFilesPath"
+          />
+          <button class="folder-button" @click="selectDataFilesPath">&nbsp;</button>
+        </div>
+      </div>
 
-    <div class="field">
-      <label for="midi-output-device">MIDI Output Device</label>
-      <select id="midi-output-device" v-model="midiOutputDevice" :disabled="availableMidiOutputs().length === 0">
-        <option v-for="output in availableMidiOutputs()" :key="output.id" :value="output">
-          {{ output.name }}
-        </option>
-      </select>
-    </div>
-    <div class="field">
-      <label for="midi-instrument">Instrument</label>
-      <select id="midi-instrument" v-model="midiInstrument">
-        <option v-for="instrument in availableMidiInstruments()" :key="instrument.code" :value="instrument">
-          {{ instrument.name }}
-        </option>
-      </select>
+      <div class="field">
+        <label for="midi-input-device">MIDI Input Device</label>
+        <select id="midi-input-device" v-model="midiInputDevice" :disabled="availableMidiInputs().length === 0">
+          <option v-for="input in availableMidiInputs()" :key="input.id" :value="input">
+            {{ input.name }}
+          </option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label for="midi-output-device">MIDI Output Device</label>
+        <select id="midi-output-device" v-model="midiOutputDevice" :disabled="availableMidiOutputs().length === 0">
+          <option v-for="output in availableMidiOutputs()" :key="output.id" :value="output">
+            {{ output.name }}
+          </option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="midi-instrument">Instrument</label>
+        <select id="midi-instrument" v-model="midiInstrument">
+          <option v-for="instrument in availableMidiInstruments()" :key="instrument.code" :value="instrument">
+            {{ instrument.name }}
+          </option>
+        </select>
+      </div>
     </div>
   </div>
 </template>
@@ -204,52 +206,73 @@ export default defineComponent({
     }
   }
 
-  .field {
+  .fields-container {
     display: flex;
     flex-direction: column;
-    margin-bottom: 2em;
+    gap: 2em;
 
-    label {
-      margin-bottom: 0.5em;
-      line-height: 1.4em;
+    .field {
+      display: flex;
+      flex-direction: column;
+
+      label {
+        margin-bottom: 0.5em;
+        line-height: 1.4em;
+      }
+
+      input,
+      select {
+        padding: 0.5em;
+        border: 1px solid #e3e3e3;
+        border-radius: 4px;
+        flex-grow: 1;
+        font-size: 1em;
+      }
+
+      .folder-button {
+        @include pressable;
+        flex-shrink: 0;
+        width: 3em;
+        background: url(../assets/images/folder.svg) no-repeat 50% 50%;
+        border: 1px solid #e3e3e3;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 1em;
+        padding: 0.5em 2em;
+      }
+
+      button {
+        @include pressable;
+        flex-shrink: 0;
+        padding: 0.3em 2em;
+        border: 1px solid #e3e3e3;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 1em;
+      }
     }
 
-    input,
-    select {
-      padding: 0.5em;
-      border: 1px solid #e3e3e3;
-      border-radius: 4px;
-      flex-grow: 1;
-    }
-
-    .folder-button {
-      @include pressable;
-      flex-shrink: 0;
-      width: 3em;
-      background: url(../assets/images/folder.svg) no-repeat 50% 50%;
-      border: 1px solid #e3e3e3;
-      border-radius: 4px;
-      cursor: pointer;
-    }
-
-    button {
-      @include pressable;
-      flex-shrink: 0;
-      padding: 0.3em 2em;
-      border: 1px solid #e3e3e3;
-      border-radius: 4px;
-      cursor: pointer;
-    }
-  }
-
-  .one-liner {
+    .one-liner {
       display: flex;
       flex-direction: row;
+      align-items: center;
       gap: 1em;
 
       label {
         margin-bottom: 0;
       }
     }
+
+    .edit-mode {
+      &.edit-mode-title {
+        flex-grow: 1;
+      }
+
+      &.edit-mode-button {
+        flex-shrink: 0;
+        font-size: 1em;
+      }
+    }
+  }
 }
 </style>

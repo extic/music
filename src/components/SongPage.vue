@@ -29,7 +29,7 @@
           @click="groupClicked(group)"
           @click.right.stop.prevent="openNoteGroupContextMenu($event, group.id as number)"
           >
-          <div class="hover-trap" :class="{'start-block': group.id === startBlock, 'end-block': group.id === endBlock, 'selected': group.id === selectedGroup}"></div>
+          <div class="hover-trap" :class="{'start-block': group.id === startBlock?.groupId, 'end-block': group.id === endBlock?.groupId, 'selected': group.id === selectedGroup}"></div>
         </div>
       </div>
       <ContextMenu ref="noteGroupContextMenu" @contextMenuClosed="contextMenuClosed()">
@@ -45,7 +45,7 @@
 <script lang="ts">
 import { getSongPages } from "../services/song-serializer.service";
 import { computed, defineComponent, onMounted, onUnmounted, ref } from "vue";
-import { usePlayerStore } from "../store/player-store";
+import { LoopBlock, usePlayerStore } from "../store/player-store";
 import { useSongStore } from "../store/song-store";
 import { parseSong, printDebug } from "../utils/parser/song.parser";
 import ContextMenuItemSeparator from "./menu/ContextMenuItemSeparator.vue"
@@ -82,25 +82,25 @@ export default defineComponent({
     const selectedGroup = ref(undefined as number | undefined);
 
     const startBlock = computed({
-      get(): number | undefined {
+      get(): LoopBlock | undefined {
         return player.startBlock;
       },
-      set(newValue: number | undefined ) {
+      set(newValue: LoopBlock | undefined ) {
         player.setStartBlock(newValue);
       },
     });
 
     const endBlock = computed({
-      get(): number | undefined {
+      get(): LoopBlock | undefined {
         return player.endBlock;
       },
-      set(newValue: number | undefined) {
+      set(newValue: LoopBlock | undefined) {
         player.setEndBlock(newValue);
       },
     });
 
     const currGroup = computed(() => {
-      return groupPositions.value[player.position] ?? { posX: 0, posY: 0, width: 0, height: 0 };
+      return groupPositions.value[player.groupOrder[player.position]] ?? { posX: 0, posY: 0, width: 0, height: 0 };
     });
 
     const scrollMarkerIntoView = () => {
@@ -147,7 +147,7 @@ export default defineComponent({
     };
 
     const groupClicked = (group: ElementPosition) => {
-      player.setPosition(group.id as number);
+      player.setPosition(player.groupOrder.indexOf(group.id as number));
     };
 
     const setLoopStartText = () => {
@@ -158,24 +158,31 @@ export default defineComponent({
       return (selectedGroup.value === endBlock.value ? "Clear" : "Set as") + " loop end";
     };
 
+    const createLoopBlock = (groupId: number): LoopBlock => {
+      return {
+        groupId,
+        orderId: player.groupOrder.indexOf(groupId)!,
+      }
+    }
+
     const setLoopStart = () => {
       if (startBlock.value) {
-        startBlock.value = startBlock.value === selectedGroup.value ? undefined : selectedGroup.value;
+        startBlock.value = startBlock.value?.groupId === selectedGroup.value ? undefined : createLoopBlock(selectedGroup.value!);
       } else {
-        startBlock.value = selectedGroup.value;
+        startBlock.value = createLoopBlock(selectedGroup.value!)
       }
-      if (startBlock.value && startBlock.value === endBlock.value) {
+      if (startBlock.value?.groupId === endBlock.value?.groupId) {
         endBlock.value = undefined;
       }
     };
 
     const setLoopEnd = () => {
       if (endBlock.value) {
-        endBlock.value = endBlock.value === selectedGroup.value ? undefined : selectedGroup.value;
+        endBlock.value = endBlock.value?.groupId === selectedGroup.value ? undefined : createLoopBlock(selectedGroup.value!);
       } else {
-        endBlock.value = selectedGroup.value;
+        endBlock.value = createLoopBlock(selectedGroup.value!)
       }
-      if (endBlock.value && startBlock.value === endBlock.value) {
+      if (startBlock.value?.groupId === endBlock.value?.groupId) {
         startBlock.value = undefined;
       }
     };
@@ -206,6 +213,7 @@ export default defineComponent({
       playerStore.setSelectedInstrument(songData.instruments[0]);
       playerStore.setMeasures(songData.measures);
       playerStore.setGroups(songData.groups);
+      playerStore.setGroupOrder(songData.groupOrder);
       playerStore.setPageData(songData.pageData);
       //   SongPlayer.initInstruments();
     });

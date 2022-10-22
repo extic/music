@@ -5,6 +5,11 @@ import { storage } from "../utils/local_storage";
 
 export type PlayerType = "computer" | "human";
 
+export type LoopBlock = {
+  groupId: number;
+  orderId: number;
+};
+
 // export type VirtualOnKeys = { [staff: number]: VirtualOnKeyEntry };
 // export type VirtualOnKeyEntry = { [key: string]: VirtualOnKeyData };
 // export type VirtualOnKeyData = { time: number; instrument: Instrument };
@@ -19,13 +24,14 @@ export const usePlayerStore = defineStore("player", {
     _autoAccompany: true,
     _measures: [] as Measure[],
     _groups: [] as NoteGroup[],
+    _groupOrder: [] as number[],
     _pageData: {} as PageData,
     _bpm: 0,
     _position: 0,
     _playing: false,
     _pressedKeys: [] as number[],
-    _startBlock: undefined as number | undefined,
-    _endBlock: undefined as number | undefined,
+    _startBlock: undefined as LoopBlock | undefined,
+    _endBlock: undefined as LoopBlock | undefined,
     _playSpeed: 1,
     _playingTimeoutId: null as NodeJS.Timeout | null,
     _requiredKeys: {} as { [key: string]: boolean },
@@ -67,6 +73,10 @@ export const usePlayerStore = defineStore("player", {
       return state._groups;
     },
 
+    groupOrder(state): number[] {
+      return state._groupOrder;
+    },
+
     pageData(state): PageData {
       return state._pageData;
     },
@@ -87,11 +97,11 @@ export const usePlayerStore = defineStore("player", {
       return state._pressedKeys;
     },
 
-    startBlock(state): number | undefined {
+    startBlock(state): LoopBlock | undefined {
       return state._startBlock;
     },
 
-    endBlock(state): number | undefined {
+    endBlock(state): LoopBlock | undefined {
       return state._endBlock;
     },
 
@@ -153,6 +163,10 @@ export const usePlayerStore = defineStore("player", {
       this._groups = groups;
     },
 
+    setGroupOrder(groupOrder: number[]): void {
+      this._groupOrder = groupOrder;
+    },
+
     setPageData(pageData: PageData): void {
       this._pageData = pageData;
     },
@@ -183,11 +197,11 @@ export const usePlayerStore = defineStore("player", {
       _.pull(this._pressedKeys, key);
     },
 
-    setStartBlock(startBlock: number | undefined) {
+    setStartBlock(startBlock: LoopBlock | undefined) {
       this._startBlock = startBlock;
     },
 
-    setEndBlock(endBlock: number | undefined) {
+    setEndBlock(endBlock: LoopBlock | undefined) {
       this._endBlock = endBlock;
     },
 

@@ -5,6 +5,7 @@ export type SongData = {
   instruments: Instrument[];
   measures: Measure[];
   groups: NoteGroup[];
+  groupOrder: number[];
   // sustainPresses: List<SustainPress>,
   // divisions: Int,
   // tempoFactor: Float
@@ -41,6 +42,9 @@ export type NoteGroup = {
   dimension: Dimension,
   measure: Measure,
   tempo: number,
+  repeatStartNumber: number | undefined,
+  repeatStart: boolean,
+  repeatEnd: boolean,
 }
 
 export type InstrumentStaves = {

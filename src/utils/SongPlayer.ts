@@ -18,7 +18,7 @@ function triggerKeys() {
   }
 
   const practiceStaves = getPracticeStaves();
-  const group = player.groups[player.position];
+  const group = player.groups[player.groupOrder[player.position]];
 
   const pressedKeys = player.pressedKeys;
   const requiredKeys = calcRequiredKeys(practiceStaves, group);
@@ -37,7 +37,7 @@ function triggerKeys() {
 
 function triggerOffNotes(practiceStaves: number[]) {
   const player = usePlayerStore();
-  const group = player.groups[player.position];
+  const group = player.groups[player.groupOrder[player.position]];
 
   group.instruments.forEach((instrumentStaves) => {
     const instrument = instrumentStaves.instrument;
@@ -55,7 +55,7 @@ function triggerOffNotes(practiceStaves: number[]) {
 
 function triggerComputerKeys(practiceStaves: number[]) {
   const player = usePlayerStore();
-  const group = player.groups[player.position];
+  const group = player.groups[player.groupOrder[player.position]];
   const velocity = player.accompanyVeolcityAsPlayer ? player.playerVelocity : player.accompanyVelocity;
 
   group.instruments.forEach((instrumentStaves) => {
@@ -101,13 +101,13 @@ function advancePosition() {
     return;
   }
 
-  if (player.position === player.endBlock) {
-    player.setPosition(player.startBlock ?? 0);
+  if (player.position === player.endBlock?.orderId ?? 0) {
+    player.setPosition(player.startBlock?.orderId ?? 0);
   } else {
     player.setPosition(player.position + 1);
   }
 
-  if (player.position === player.groups.length) {
+  if (player.position === player.groupOrder.length) {
     stop();
   }
 }
@@ -131,7 +131,7 @@ function pause() {
 function stop() {
   const player = usePlayerStore();
   pause();
-  player.setPosition(player.startBlock ?? 0)
+  player.setPosition(player.startBlock?.orderId ?? 0)
 }
 
 function getPracticeStaves(): number[] {

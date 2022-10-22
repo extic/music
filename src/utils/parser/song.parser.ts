@@ -39,6 +39,7 @@ export function parseSong(song: Song): SongData {
   const instruments = readInstruments(scorePartwise);
   const measures = parseMeasures(scorePartwise, instruments, pageData);
   const groups = parseGroups(scorePartwise, instruments, measures);
+  const groupOrder = calcGroupOrder(groups);
 
   pageData.pageCount = (max(measures.map((it) => it.pageNumber)) ?? 0) + 1;
 
@@ -47,16 +48,20 @@ export function parseSong(song: Song): SongData {
     instruments,
     measures,
     groups,
+    groupOrder,
   } as SongData;
 }
 
 export function printDebug(songData: SongData) {
-  const debug = false;
+  const debug = true;
   if (!debug) {
     return
   }
   songData.groups.forEach((group) => {
-    console.log(`Group ${group.id}, time=${group.time}, duration=${group.duration}, measure=${group.measure.number}, tempo=${group.tempo}, divisions=${group.measure.divisions}`)
+    const repeatStart = group.repeatStart ? ", repeatStart" : "";
+    const repeatEnd = group.repeatEnd ? ", repeatEnd" : "";
+    const repeatNumber = group.repeatStartNumber ? `, repeatNumber=${group.repeatStartNumber}` : "";
+    console.log(`Group ${group.id}, time=${group.time}, duration=${group.duration}, measure=${group.measure.number}, tempo=${group.tempo}, divisions=${group.measure.divisions}${repeatStart}${repeatEnd}${repeatNumber}`)
     group.instruments.forEach((instrumentStaves) => {
       console.log(`    Instrument ${instrumentStaves.instrument.id}:`);
       instrumentStaves.staves.forEach((staff) => {
@@ -69,9 +74,11 @@ export function printDebug(songData: SongData) {
         staff.notesOff.forEach((noteNumber) => {
           console.log(`                Note ${noteNumber}`)
         });
-      })
-    })
-  })
+      });
+    });
+  });
+
+  console.log(songData.groupOrder);
 }
 
 function readSong(song: Song): Document {
@@ -295,6 +302,8 @@ function parseMeasureNotes(groups: NoteGroup[], measureElement: Element, context
   const accidentalOverrides: AccidentalOverrides = {};
 
   const nodes = ([...measureElement.childNodes] as Element[]).filter((it) => it.nodeName !== '#text');
+  let repeatStartNumber: number | undefined = undefined;
+  let repeatStart = false;
 
   nodes.map((node) => {
     switch (node.nodeName) {
@@ -318,6 +327,14 @@ function parseMeasureNotes(groups: NoteGroup[], measureElement: Element, context
           }
         }
 
+        if (repeatStart || currGroup.id === 0) {
+          currGroup.repeatStart = true;
+          repeatStart = false;
+        }
+        if (repeatStartNumber) {
+          currGroup.repeatStartNumber = repeatStartNumber;
+          repeatStartNumber = undefined;
+        }
         currGroup.instruments[context.instrument.index].staves[parsedNote.staffNumber].notes.push(parsedNote.note);
 
         context.prevTime = context.currTime;
@@ -345,6 +362,26 @@ function parseMeasureNotes(groups: NoteGroup[], measureElement: Element, context
           const tempo = sound.getAttribute("tempo");
           if (tempo) {
             context.tempo = parseInt(tempo, 10);
+          }
+        }
+        break;
+      }
+
+      case 'barline': {
+        const ending = node.querySelector('ending');
+        if (ending) {
+          if (ending.getAttribute('type') === 'start') {
+            repeatStartNumber = parseInt(ending.getAttribute('number')!, 10);
+          }
+        }
+        const repeat = node.querySelector('repeat');
+        if (repeat) {
+          const direction = repeat.getAttribute('direction');
+          if (direction === 'backward') {
+            last(groups)!.repeatEnd = true;
+          }
+          if (direction === 'forward') {
+            repeatStart = true;
           }
         }
         break;
@@ -414,6 +451,9 @@ function createNewGroup(context: MeasureParsingContext): NoteGroup {
       height: 0,
     },
     tempo: context.tempo,
+    repeatStartNumber: undefined,
+    repeatStart: false,
+    repeatEnd: false,
   }
 }
 
@@ -519,4 +559,47 @@ function updateNotesOff(groups: NoteGroup[]) {
       });
     });
   });
+}
+
+function calcGroupOrder(groups: NoteGroup[]): number[] {
+  const groupOrder = [] as number[];
+  const repeatStartStack = [] as number[];
+  const repeatEndVisited = [] as number[];
+
+  let currGroup = groups[0];
+  while (currGroup) {
+    if (currGroup.repeatStart) {
+      repeatStartStack.push(currGroup.id);
+    }
+
+    if (currGroup.repeatStartNumber) {
+      if (repeatEndVisited.includes(currGroup.id)) {
+        let index = currGroup.id;
+        while (true) {
+          index++;
+          const nextStartNumber = groups[index].repeatStartNumber
+          if (nextStartNumber && currGroup.repeatStartNumber + 1 === nextStartNumber) {
+            currGroup = groups[index];
+            break;
+          }
+        }
+      } else {
+        groupOrder.push(currGroup.id);
+        repeatEndVisited.push(currGroup.id);
+        currGroup = groups[currGroup.id + 1];
+      }
+    } else if (currGroup.repeatEnd) {
+      groupOrder.push(currGroup.id);
+      if (repeatEndVisited.includes(currGroup.id)) {
+        currGroup = groups[currGroup.id + 1];
+      } else {
+        repeatEndVisited.push(currGroup.id);
+        currGroup = groups[repeatStartStack.pop()!];
+      }
+    } else {
+      groupOrder.push(currGroup.id);
+      currGroup = groups[currGroup.id + 1];
+    }
+  }
+  return groupOrder;
 }

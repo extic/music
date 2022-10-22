@@ -75,7 +75,7 @@ export default defineComponent({
 //       // store.dispatch("resetPlay");
       songs.setSelectedSong(null);
       layout.setKeyboardButtonShown(false);
-      SongPlayer.reset();
+      SongPlayer.stop();
       router.push({ name: "SongList" });
     };
 

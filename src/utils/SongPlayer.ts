@@ -56,6 +56,7 @@ function triggerOffNotes(practiceStaves: number[]) {
 function triggerComputerKeys(practiceStaves: number[]) {
   const player = usePlayerStore();
   const group = player.groups[player.position];
+  const velocity = player.accompanyVeolcityAsPlayer ? player.playerVelocity : player.accompanyVelocity;
 
   group.instruments.forEach((instrumentStaves) => {
     const instrument = instrumentStaves.instrument;
@@ -65,7 +66,7 @@ function triggerComputerKeys(practiceStaves: number[]) {
         staff.notes
           .filter((note) => !note.rest && !note.tieStop)
           .forEach((note) => {
-            midiService.play(note.noteNumber, 0x40, instrumentStaves.instrument); //, AvailableMidiInstruments[0], 0);
+            midiService.play(note.noteNumber, velocity, instrumentStaves.instrument); //, AvailableMidiInstruments[0], 0);
           });
       }
     });

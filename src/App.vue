@@ -25,7 +25,7 @@ export default defineComponent({
       }
 
       keyOn(key: number, velocity: number) {
-        // // midi.setUserVelocity(velocity);
+        player.setPlayerVelocity(velocity);
         // // midi.keyOn(key, velocity);
 
         player.setPressedKey(key);

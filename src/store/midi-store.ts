@@ -1,39 +1,13 @@
 import { defineStore } from "pinia";
-import { storage } from "../utils/local_storage";
 
 export const useMidiStore = defineStore("midi", {
   state: () => ({
     _connected: false,
-    // _pressedKeys: [] as number[],
-    _correctToneVelocity: storage.getNumber("correctToneVelocity", 0x2f),
-    _userVelocity: storage.getNumber("userVelocity", 0),
-    _useUserVelocityForAccompanying: storage.getBoolean("useUserVelocityForAccompanying", false),
-    _accompanyVelocity: storage.getNumber("accompanyVelocity", 0x40),
   }),
 
   getters: {
     connected(state): boolean {
       return state._connected;
-    },
-
-    // pressedKeys(state): number[] {
-    //   return state._pressedKeys;
-    // },
-
-    correctToneVelocity(state): number {
-      return state._correctToneVelocity;
-    },
-
-    userVelocity(state): number {
-      return state._userVelocity;
-    },
-
-    useUserVelocityForAccompanying(state): boolean {
-      return state._useUserVelocityForAccompanying;
-    },
-
-    accompanyVelocity(state): number {
-      return state._accompanyVelocity;
     },
   },
 
@@ -41,11 +15,6 @@ export const useMidiStore = defineStore("midi", {
     setConnected(connected: boolean) {
       this._connected = connected;
     },
-
-    // setPressedKeys(pressedKeys: number[]) {
-    //   this._pressedKeys = pressedKeys;
-    // },
-
     // keyOn(key: number, velocity: number) {
     //   const existingKey = this._pressedKeys.find((it) => it === key);
     //   if (!existingKey) {
@@ -57,11 +26,6 @@ export const useMidiStore = defineStore("midi", {
     //   const filteredKeys = this.pressedKeys.filter((it) => it !== key);
     //   this._pressedKeys = filteredKeys;
     // },
-
-    setUserVelocity(userVelocity: number) {
-      this._userVelocity = userVelocity;
-      storage.setValue("userVelocity", userVelocity);
-    },
   },
 });
 

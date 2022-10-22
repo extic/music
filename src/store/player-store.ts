@@ -1,7 +1,7 @@
 import _ from "lodash";
 import { defineStore } from "pinia";
 import { Instrument, Measure, NoteGroup, PageData } from "../utils/parser/song.data";
-// import { Instrument, VerticalGroup } from "../utils/SongParser";
+import { storage } from "../utils/local_storage";
 
 export type PlayerType = "computer" | "human";
 
@@ -28,8 +28,10 @@ export const usePlayerStore = defineStore("player", {
     _endBlock: undefined as number | undefined,
     _playSpeed: 1,
     _playingTimeoutId: null as NodeJS.Timeout | null,
-    _requiredKeys: {} as { [key: string]: boolean }
-    // _virtualOnKeys: {} as VirtualOnKeys,
+    _requiredKeys: {} as { [key: string]: boolean },
+    _playerVelocity: storage.getNumber("playerVelocity", 0),
+    _accompanyVelocityAsPlayer: storage.getBoolean("accompanyVelocityAsPlayer", false),
+    _accompanyVelocity: storage.getNumber("accompanyVelocity", 0x40),
   }),
 
   getters: {
@@ -105,9 +107,17 @@ export const usePlayerStore = defineStore("player", {
       return state._requiredKeys;
     },
 
-    // virtualOnKeys(state): VirtualOnKeys {
-    //   return state._virtualOnKeys;
-    // },
+    playerVelocity(state): number {
+      return state._playerVelocity;
+    },
+
+    accompanyVeolcityAsPlayer(state): boolean {
+      return state._accompanyVelocityAsPlayer;
+    },
+
+    accompanyVelocity(state): number {
+      return state._accompanyVelocity;
+    },
   },
 
   actions: {
@@ -195,17 +205,19 @@ export const usePlayerStore = defineStore("player", {
       this._requiredKeys = keys;
     },
 
-    // resetVirtualOnKeys(staffs: number[]): void {
-    //   this._virtualOnKeys = {};
-    //   staffs.forEach((staff) => (this._virtualOnKeys[staff] = {}));
-    // },
+    setPlayerVelocity(playerVelocity: number) {
+      this._playerVelocity = playerVelocity;
+      storage.setValue("playerVelocity", playerVelocity);
+    },
 
-    // setVirtualOnKey(staff: number, key: string, time: number, instrument: Instrument) {
-    //   this._virtualOnKeys[staff][key] = { time, instrument };
-    // },
+    setAccompanyVelocityAsPlayer(accompanyVelocityAsPlayer: boolean) {
+      this._accompanyVelocityAsPlayer = accompanyVelocityAsPlayer;
+      storage.setValue("accompanyVelocityAsPlayer", accompanyVelocityAsPlayer);
+    },
 
-    // removeVirtualOnKey(staff: number, key: string) {
-    //   delete this._virtualOnKeys[staff][key];
-    // },
+    setAccompanyVelocity(accompanyVelocity: number) {
+      this._accompanyVelocity = accompanyVelocity;
+      storage.setValue("accompanyVelocity", accompanyVelocity);
+    },
   },
 });

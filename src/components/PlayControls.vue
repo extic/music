@@ -74,19 +74,19 @@
         <input v-model="correctNoteVolume" max="127" min="0" type="range" />
       </div>
     </div>
-
+-->
     <div class="group">
-      <div class="group-label">Other-Hand Volume</div>
-      <div @click="toggleUseUserVelocityForAccompanying()">
-        <input :checked="useUserVelocityForAccompanying" type="checkbox" />
-        <label>Use user key press velocities</label>
+      <div class="group-label">Accompany Volume</div>
+      <div v-if="player === 'human'" @click="toggleAccompanyVelocityAsPlayer()">
+        <input :checked="accompanyVelocityAsPlayer" type="checkbox" />
+        <label>Use player key press velocities</label>
       </div>
       <div>
         <div>Volume:</div>
-        <input v-model="accompanyVelocity" max="127" min="0" type="range" />
+        <input class="accompany-velocity" v-model="accompanyVelocity" max="127" min="0" type="range" />
       </div>
     </div>
-  -->
+
     <div class="group">
       <div class="group-label">Play Speed</div>
       <div>
@@ -181,6 +181,29 @@ export default defineComponent({
       },
     });
 
+    const toggleAccompanyVelocityAsPlayer = () => {
+      playerStore.setAccompanyVelocityAsPlayer(!playerStore.accompanyVeolcityAsPlayer);
+    };
+
+    const accompanyVelocityAsPlayer = computed({
+      get(): boolean {
+        return playerStore.accompanyVeolcityAsPlayer;
+      },
+      set(newValue: boolean) {
+        playerStore.setAccompanyVelocityAsPlayer(newValue);
+      },
+    });
+
+    const accompanyVelocity = computed({
+      get(): number {
+        return playerStore.accompanyVelocity;
+      },
+
+      set(velocity: number) {
+        playerStore.setAccompanyVelocity(velocity);
+      },
+    });
+
     const setPlaySpeed = (playSpeed: number) => {
       playerStore.setPlaySpeed(playSpeed);
     };
@@ -189,7 +212,23 @@ export default defineComponent({
     const pause = SongPlayer.pause;
     const stop = SongPlayer.stop;
 
-    return { playing, player, instruments, selectedInstrument, practiceLeftHand, practiceRightHand, autoAccompany, play, pause, stop, playSpeed, setPlaySpeed };
+    return {
+      playing,
+      player,
+      instruments,
+      selectedInstrument,
+      practiceLeftHand,
+      practiceRightHand,
+      autoAccompany,
+      play,
+      pause,
+      stop,
+      playSpeed,
+      setPlaySpeed,
+      toggleAccompanyVelocityAsPlayer,
+      accompanyVelocityAsPlayer,
+      accompanyVelocity,
+    };
   },
 
   // methods: {
@@ -218,67 +257,13 @@ export default defineComponent({
   //   // this.$store.commit("setAccompanyWithOtherHand", !player(this.$store).accompanyWithOtherHand);
   // },
 
-  //   togglePlayHighPitchWhenCorrect() {
-  //     // this.$store.commit("setPlayHighPitchWhenCorrect", !player(this.$store).playHighPitchWhenCorrect);
-  //   },
-
   //   toggleUseUserVelocityForAccompanying() {
   //     // this.$store.commit("setUseUserVelocityForAccompanying", !midi(this.$store).useUserVelocityForAccompanying);
   //   },
   // },
 
   // computed: {
-  //   isAccompanyWithOtherHand(): boolean {
-  //     // return player(this.$store).accompanyWithOtherHand;
-  //     return false;
-  //   },
 
-  //   isPracticeRightHand(): boolean {
-  //     // return player(this.$store).practiceRightHand;
-  //     return false;
-  //   },
-
-  //   isPracticeLeftHand(): boolean {
-  //     // return player(this.$store).practiceLeftHand;
-  //     return false;
-  //   },
-
-  //   isPlayHighPitchWhenCorrect(): boolean {
-  //     // return player(this.$store).playHighPitchWhenCorrect;
-  //     return false;
-  //   },
-
-  //   correctNoteVolume: {
-  //     get(): number {
-  //       // return midi(this.$store).correctToneVelocity;
-  //       return 0;
-  //     },
-
-  //     set(velocity: number) {
-  //       // this.$store.commit("setCorrectToneVelocity", velocity);
-  //     },
-  //   },
-
-  //   useUserVelocityForAccompanying: {
-  //     get(): boolean {
-  //       //return midi(this.$store).useUserVelocityForAccompanying;
-  //       return false;
-  //     },
-  //     set(newValue: boolean) {
-  //       // this.$store.commit("setUseUserVelocityForAccompanying", newValue);
-  //     },
-  //   },
-
-  //   accompanyVelocity: {
-  //     get(): number {
-  //       // return midi(this.$store).accompanyVelocity;
-  //       return 0;
-  //     },
-
-  //     set(velocity: number) {
-  //       // this.$store.commit("setAccompanyVelocity", velocity);
-  //     },
-  //   },
 
   //   playSpeed: {
   //     get(): number {
@@ -471,7 +456,7 @@ export default defineComponent({
     cursor: pointer;
   }
 
-  .play-speed-input {
+  .accompany-velocity, .play-speed-input {
     width: 100%;
   }
 

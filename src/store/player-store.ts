@@ -16,7 +16,7 @@ export type LoopBlock = {
 
 export const usePlayerStore = defineStore("player", {
   state: () => ({
-    _player: "human" as PlayerType,
+    _player: "computer" as PlayerType,
     _instruments: [] as Instrument[],
     _selectedInstrument: null as Instrument | null,
     _practiceLeftHand: true,

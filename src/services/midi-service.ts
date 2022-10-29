@@ -137,13 +137,6 @@ export const midiService = {
     }
   },
 
-  // play: (noteNumber: number, velocity: number) => {
-  //   if (selectedOutput) {
-  //     selectedOutput.send([128, noteNumber, 0]);
-  //     selectedOutput.send([144, noteNumber, velocity]);
-  //   }
-  // },
-
   play: (noteNumber: number, velocity: number, instrument: Instrument) => {
     if (selectedOutput) {
       // selectedOutput.send([192 | instrument.midiChannel, instrument.code]);
@@ -152,17 +145,9 @@ export const midiService = {
     }
   },
 
-  playCorrectNote: (velocity: number) => {
-    if (selectedOutput) {
-      selectedOutput.send([128, 105, 0]);
-      selectedOutput.send([144, 105, velocity]);
-    }
-  },
-
-  // eslint-disable-next-line
   sustain: (on: boolean) => {
     if (selectedOutput) {
-      // midiOutput.send([176, 64, on ? 127 : 0])
+      selectedOutput?.send([176, 64, on ? 127 : 0]);
     }
   },
 

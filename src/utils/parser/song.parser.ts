@@ -1,4 +1,4 @@
-import { Instrument, InstrumentStaves, Note, NoteGroup, Point, SongData, PageData, Staff, PageMargins, Measure, StaveLayouts } from "./song.data";
+import { Instrument, InstrumentStaves, Note, NoteGroup, Point, SongData, PageData, Staff, PageMargins, Measure, StaveLayouts, SustainType } from "./song.data";
 import fs from "fs";
 import { AccidentalOverrides, calcNoteNumber } from "./note-number.parser";
 import { findAll, findOne, findOneAsNumber, findAttr, findOneAsString, findOptionalOneAsInt, findAttrInt, findOneAsInt } from "./xml.utils";
@@ -61,7 +61,8 @@ export function printDebug(songData: SongData) {
     const repeatStart = group.repeatStart ? ", repeatStart" : "";
     const repeatEnd = group.repeatEnd ? ", repeatEnd" : "";
     const repeatNumber = group.repeatStartNumber ? `, repeatNumber=${group.repeatStartNumber}` : "";
-    console.log(`Group ${group.id}, time=${group.time}, duration=${group.duration}, measure=${group.measure.number}, tempo=${group.tempo}, divisions=${group.measure.divisions}${repeatStart}${repeatEnd}${repeatNumber}`)
+    const sustain = group.sustain !== undefined ? `, sustain=${group.sustain.toString()}` : "";
+    console.log(`Group ${group.id}, time=${group.time}, duration=${group.duration}, measure=${group.measure.number}, tempo=${group.tempo}, divisions=${group.measure.divisions}${repeatStart}${repeatEnd}${repeatNumber}${sustain}`)
     group.instruments.forEach((instrumentStaves) => {
       console.log(`    Instrument ${instrumentStaves.instrument.id}:`);
       instrumentStaves.staves.forEach((staff) => {
@@ -364,6 +365,24 @@ function parseMeasureNotes(groups: NoteGroup[], measureElement: Element, context
             context.tempo = parseInt(tempo, 10);
           }
         }
+        const directionType = node.querySelector('direction-type');
+        if (directionType) {
+          const pedal = directionType.querySelector('pedal');
+          if (pedal) {
+            const pedalType = pedal.getAttribute('type');
+            if (pedalType === 'start') {
+              const currGroup = groups.find((it) => it.time === context.currTime);
+              if (currGroup) {
+                currGroup.sustain = SustainType.On;
+              }
+            } else if (pedalType === 'stop') {
+              const currGroup = groups.find((it) => it.time === context.prevTime);
+              if (currGroup) {
+                currGroup.sustain = SustainType.Off;
+              }
+            }
+          }
+        }
         break;
       }
 
@@ -454,6 +473,7 @@ function createNewGroup(context: MeasureParsingContext): NoteGroup {
     repeatStartNumber: undefined,
     repeatStart: false,
     repeatEnd: false,
+    sustain: undefined,
   }
 }
 

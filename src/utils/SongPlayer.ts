@@ -1,7 +1,7 @@
 import { difference, isEmpty } from "lodash";
 import { midiService } from "../services/midi-service";
 import { usePlayerStore } from "../store/player-store";
-import { NoteGroup } from "./parser/song.data";
+import { NoteGroup, SustainType } from "./parser/song.data";
 
 function initInstruments() {``
   const player = usePlayerStore();
@@ -29,6 +29,7 @@ function triggerKeys() {
   }
   player.clearPressedKeys();
 
+  triggerSustain(group, SustainType.On);
   triggerOffNotes(practiceStaves);
   triggerComputerKeys(practiceStaves);
 
@@ -101,6 +102,9 @@ function advancePosition() {
     return;
   }
 
+  const group = player.groups[player.groupOrder[player.position]];
+  triggerSustain(group, SustainType.Off);
+
   if (player.position === player.endBlock?.orderId ?? 0) {
     player.setPosition(player.startBlock?.orderId ?? 0);
   } else {
@@ -168,6 +172,12 @@ function calcRequiredKeys(practiceStaves: number[], group: NoteGroup): number[] 
 
 function pressedAndRequiredKeysMismatch(requiredKeys: number[], pressedKeys: number[]): boolean {
   return requiredKeys.length > 0 && !isEmpty(difference(requiredKeys, pressedKeys));
+}
+
+function triggerSustain(group: NoteGroup, type: SustainType) {
+  if (group.sustain === type) {
+    midiService.sustain(group.sustain === SustainType.On);
+  }
 }
 
 export const SongPlayer = {

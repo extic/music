@@ -45,6 +45,11 @@ export type NoteGroup = {
   repeatStartNumber: number | undefined,
   repeatStart: boolean,
   repeatEnd: boolean,
+  sustain: SustainType | undefined,
+}
+
+export enum SustainType {
+  On, Off
 }
 
 export type InstrumentStaves = {
